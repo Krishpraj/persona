@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { PersonaIcon, BrainIcon, PackageIcon, SparklesIcon, FileIcon, ClockIcon, TrashIcon, PlusIcon, ArrowRightIcon } from '@/components/icons';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 interface ProjectFormData {
   productName: string;
@@ -19,386 +19,373 @@ interface SavedProject {
   lastModified: string;
 }
 
+/* ——————————————————————————————————————————————————————————————
+ * PAGE
+ * —————————————————————————————————————————————————————————————— */
+
 export default function Home() {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
   const [savedProjects, setSavedProjects] = useState<SavedProject[]>([]);
   const [formData, setFormData] = useState<ProjectFormData>({
-    productName: '',
-    tone: 'professional',
-    prompt: ''
+    productName: "",
+    tone: "professional",
+    prompt: "",
   });
 
-  // Load saved projects from localStorage on component mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('persona-projects');
-      if (saved) {
-        const projects = JSON.parse(saved);
-        setSavedProjects(projects);
-      }
+      const saved = localStorage.getItem("persona-projects");
+      if (saved) setSavedProjects(JSON.parse(saved));
     } catch (error) {
-      console.error('Error loading saved projects:', error);
+      console.error("Error loading saved projects:", error);
     }
   }, []);
 
-  // Save projects to localStorage
   const saveProjectsToStorage = (projects: SavedProject[]) => {
     try {
-      localStorage.setItem('persona-projects', JSON.stringify(projects));
+      localStorage.setItem("persona-projects", JSON.stringify(projects));
       setSavedProjects(projects);
     } catch (error) {
-      console.error('Error saving projects:', error);
+      console.error("Error saving projects:", error);
     }
   };
 
   const toneOptions = [
-    { value: 'professional', label: 'Professional', description: 'Clear, formal, and business-focused' },
-    { value: 'friendly', label: 'Friendly', description: 'Warm, approachable, and conversational' },
-    { value: 'technical', label: 'Technical', description: 'Detailed, precise, and expert-level' },
-    { value: 'casual', label: 'Casual', description: 'Relaxed, informal, and easy-going' },
-    { value: 'authoritative', label: 'Authoritative', description: 'Confident, decisive, and commanding' },
-    { value: 'empathetic', label: 'Empathetic', description: 'Understanding, supportive, and caring' }
+    { value: "professional", label: "Professional" },
+    { value: "friendly", label: "Friendly" },
+    { value: "technical", label: "Technical" },
+    { value: "casual", label: "Casual" },
+    { value: "authoritative", label: "Authoritative" },
+    { value: "empathetic", label: "Empathetic" },
   ];
 
   const handleInputChange = (field: keyof ProjectFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleCreateProject = () => {
     if (!formData.productName.trim()) {
-      alert('Please enter a product name');
+      alert("Please enter a product name");
       return;
     }
-
     setIsCreating(true);
 
-    // Generate a unique project ID
-    const projectId = `${formData.productName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${Date.now()}`;
+    const projectId = `${formData.productName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "-")}-${Date.now()}`;
 
-    // Create new project object
     const newProject: SavedProject = {
       id: projectId,
       name: formData.productName,
       tone: formData.tone,
-      prompt: formData.prompt || `Create comprehensive documentation for ${formData.productName} with a ${formData.tone} tone.`,
+      prompt:
+        formData.prompt ||
+        `Create comprehensive documentation for ${formData.productName} with a ${formData.tone} tone.`,
       createdAt: new Date().toISOString(),
-      lastModified: new Date().toISOString()
+      lastModified: new Date().toISOString(),
     };
 
-    // Save to localStorage
-    const updatedProjects = [newProject, ...savedProjects];
-    saveProjectsToStorage(updatedProjects);
+    saveProjectsToStorage([newProject, ...savedProjects]);
+    setFormData({ productName: "", tone: "professional", prompt: "" });
 
-    // Clear the form
-    setFormData({
-      productName: '',
-      tone: 'professional',
-      prompt: ''
-    });
-
-    // Encode the parameters to pass to the product page
     const params = new URLSearchParams({
       name: formData.productName,
       tone: formData.tone,
-      prompt: formData.prompt || `Create comprehensive documentation for ${formData.productName} with a ${formData.tone} tone.`
+      prompt:
+        formData.prompt ||
+        `Create comprehensive documentation for ${formData.productName} with a ${formData.tone} tone.`,
     });
 
-    // Navigate to the product page with parameters
     router.push(`/product/${projectId}?${params.toString()}`);
   };
 
   const quickStartTemplates = [
     {
-      name: 'SaaS Product',
-      tone: 'professional',
-      prompt: 'Create comprehensive documentation for a SaaS product including features, pricing, integrations, and user guides.'
+      name: "SaaS Product",
+      tone: "professional",
+      prompt:
+        "Create comprehensive documentation for a SaaS product including features, pricing, integrations, and user guides.",
     },
     {
-      name: 'Mobile App',
-      tone: 'friendly',
-      prompt: 'Document a mobile application with user-friendly guides, troubleshooting tips, and feature explanations.'
+      name: "Mobile App",
+      tone: "friendly",
+      prompt:
+        "Document a mobile application with user-friendly guides, troubleshooting tips, and feature explanations.",
     },
     {
-      name: 'API Documentation',
-      tone: 'technical',
-      prompt: 'Generate technical documentation for an API including endpoints, authentication, examples, and error handling.'
-    }
+      name: "API",
+      tone: "technical",
+      prompt:
+        "Generate technical documentation for an API including endpoints, authentication, examples, and error handling.",
+    },
   ];
 
-  const handleQuickStart = (template: typeof quickStartTemplates[0]) => {
+  const handleQuickStart = (template: (typeof quickStartTemplates)[0]) => {
     setFormData({
       productName: template.name,
       tone: template.tone,
-      prompt: template.prompt
+      prompt: template.prompt,
     });
+    document
+      .getElementById("create")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  // Open an existing project
   const handleOpenProject = (project: SavedProject) => {
     const params = new URLSearchParams({
       name: project.name,
       tone: project.tone,
-      prompt: project.prompt
+      prompt: project.prompt,
     });
     router.push(`/product/${project.id}?${params.toString()}`);
   };
 
-  // Delete a project
   const handleDeleteProject = (projectId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-      const updatedProjects = savedProjects.filter(p => p.id !== projectId);
-      saveProjectsToStorage(updatedProjects);
-
-      // Also remove from localStorage for the specific project
-      try {
-        localStorage.removeItem(`product-flow-${projectId}`);
-      } catch (error) {
-        console.error('Error removing project data:', error);
-      }
+    if (!confirm("Delete this project? This action cannot be undone.")) return;
+    saveProjectsToStorage(savedProjects.filter((p) => p.id !== projectId));
+    try {
+      localStorage.removeItem(`product-flow-${projectId}`);
+    } catch (error) {
+      console.error("Error removing project data:", error);
     }
   };
 
-  // Clear all projects
   const handleClearAllProjects = () => {
-    if (confirm('Are you sure you want to delete ALL projects? This action cannot be undone.')) {
-      // Remove all project data from localStorage
-      savedProjects.forEach(project => {
-        try {
-          localStorage.removeItem(`product-flow-${project.id}`);
-        } catch (error) {
-          console.error('Error removing project data:', error);
-        }
-      });
-
-      // Clear the projects list
-      saveProjectsToStorage([]);
-    }
+    if (!confirm("Delete ALL projects? This action cannot be undone.")) return;
+    savedProjects.forEach((project) => {
+      try {
+        localStorage.removeItem(`product-flow-${project.id}`);
+      } catch (error) {
+        console.error("Error removing project data:", error);
+      }
+    });
+    saveProjectsToStorage([]);
   };
 
-  // Format date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return (
+      date.toLocaleDateString() +
+      " · " +
+      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    );
   };
 
+  const canSubmit = !isCreating && formData.productName.trim().length > 0;
+
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto px-8 py-12">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <img
-              src="/logo.svg"
-              alt="Persona Logo"
-              className="w-16 h-16 rounded-2xl shadow-xl"
-            />
-            <h1 className="text-4xl font-bold text-black tracking-tight">Persona</h1>
-          </div>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Create custom AI models tuned for your business with just 1 click. Build connected knowledge bases with precision and elegance.
+    <div className="-m-4 min-h-[calc(100vh-4rem)] bg-background text-foreground">
+      <div className="mx-auto max-w-6xl px-8 py-12">
+        {/* ——— TITLE ——— */}
+        <div className="mb-14">
+          <h1 className="text-[2.5rem] font-medium leading-[1.05] tracking-[-0.02em]">
+            New project
+          </h1>
+          <p className="mt-3 text-[16px] text-muted-foreground">
+            Spin up a typed knowledge graph for your product.
           </p>
         </div>
 
-        {/* Quick Start Templates */}
-        <div id="templates" className="mb-16">
-          <h2 className="text-2xl font-bold text-black mb-8">Quick Start Templates</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {quickStartTemplates.map((template, index) => (
-              <button
-                key={index}
-                onClick={() => handleQuickStart(template)}
-                className="group p-6 border border-gray-200 rounded-xl text-left hover:border-black hover:shadow-lg transition-all duration-300 bg-white"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-gray-100 group-hover:bg-black rounded-lg flex items-center justify-center transition-colors duration-300">
-                    <div className="text-gray-600 group-hover:text-white">
-                      <BrainIcon size={20} />
+        <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
+          {/* ——— MAIN COLUMN ——— */}
+          <div className="flex flex-col gap-14">
+            {/* CREATE */}
+            <section id="create" className="scroll-mt-6">
+              <h2 className="mb-5 text-[20px] font-medium tracking-tight">
+                Details
+              </h2>
+
+              <div className="border border-border/70 bg-card/30">
+                <div className="divide-y divide-border/60">
+                  {/* Name */}
+                  <div className="grid grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-[160px_1fr] sm:gap-6 sm:items-center">
+                    <label
+                      htmlFor="productName"
+                      className="text-[14px] text-muted-foreground"
+                    >
+                      Name
+                    </label>
+                    <input
+                      id="productName"
+                      type="text"
+                      value={formData.productName}
+                      onChange={(e) =>
+                        handleInputChange("productName", e.target.value)
+                      }
+                      placeholder="MyAwesome App"
+                      className="w-full rounded-none border border-border/70 bg-background/40 px-3 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary/70 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Tone */}
+                  <div className="grid grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-[160px_1fr] sm:gap-6 sm:items-start">
+                    <label className="pt-1 text-[14px] text-muted-foreground">
+                      Tone
+                    </label>
+                    <div className="flex flex-wrap gap-px bg-border/70 p-px">
+                      {toneOptions.map((tone) => {
+                        const active = formData.tone === tone.value;
+                        return (
+                          <button
+                            key={tone.value}
+                            type="button"
+                            onClick={() =>
+                              handleInputChange("tone", tone.value)
+                            }
+                            className={cn(
+                              "min-w-[120px] flex-1 px-4 py-2.5 text-[14px] tracking-tight transition-colors",
+                              active
+                                ? "bg-primary/15 text-primary"
+                                : "bg-card/40 text-foreground/80 hover:bg-card/80 hover:text-foreground"
+                            )}
+                          >
+                            {tone.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                  <h3 className="font-semibold text-black text-lg">{template.name}</h3>
-                </div>
-                <p className="text-gray-600 mb-4 leading-relaxed line-clamp-2">{template.prompt}</p>
-                <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-100 text-gray-700 rounded-lg">
-                  {template.tone}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {/* Saved Projects */}
-        {savedProjects.length > 0 && (
-          <div id="projects" className="mb-16">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-black">Recent Projects</h2>
-              <button
-                onClick={handleClearAllProjects}
-                className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
-              >
-                <TrashIcon />
-                Clear All
-              </button>
-            </div>
-            <div className="space-y-4">
-              {savedProjects.slice(0, 5).map((project) => (
-                <div
-                  key={project.id}
-                  onClick={() => handleOpenProject(project)}
-                  className="group bg-white border border-gray-200 rounded-xl p-6 hover:border-black hover:shadow-lg transition-all duration-300 cursor-pointer"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-4 mb-3">
-                        <h3 className="font-semibold text-black text-lg truncate">{project.name}</h3>
-                        <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-100 text-gray-700 rounded-lg">
-                          {project.tone}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-6 text-sm text-gray-500">
-                        <div className="flex items-center gap-2">
-                          <ClockIcon />
-                          <span>Created {formatDate(project.createdAt)}</span>
-                        </div>
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <ArrowRightIcon size={12} />
-                          <span>Open Project</span>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) => handleDeleteProject(project.id, e)}
-                      className="ml-4 p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                      title="Delete Project"
+                  {/* Prompt */}
+                  <div className="grid grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-[160px_1fr] sm:gap-6 sm:items-start">
+                    <label
+                      htmlFor="prompt"
+                      className="pt-1 text-[14px] text-muted-foreground"
                     >
-                      <TrashIcon />
+                      Prompt
+                      <span className="ml-2 text-[12px] text-muted-foreground/60">
+                        optional
+                      </span>
+                    </label>
+                    <textarea
+                      id="prompt"
+                      value={formData.prompt}
+                      onChange={(e) =>
+                        handleInputChange("prompt", e.target.value)
+                      }
+                      placeholder="Describe the docs, audience, requirements…"
+                      rows={4}
+                      className="w-full resize-none rounded-none border border-border/70 bg-background/40 px-3 py-2.5 text-[14.5px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary/70 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Submit */}
+                  <div className="flex items-center justify-end gap-4 bg-background/30 px-6 py-4">
+                    <button
+                      onClick={handleCreateProject}
+                      disabled={!canSubmit}
+                      className={cn(
+                        "inline-flex h-10 items-center justify-center gap-2 rounded-none border px-6 text-[14px] font-medium tracking-tight transition-colors",
+                        canSubmit
+                          ? "border-primary/70 bg-primary text-primary-foreground hover:bg-primary/90"
+                          : "cursor-not-allowed border-border/60 bg-card/40 text-muted-foreground"
+                      )}
+                    >
+                      {isCreating ? (
+                        <>
+                          <span className="h-3.5 w-3.5 animate-spin rounded-full border-[1.5px] border-current border-t-transparent" />
+                          Creating…
+                        </>
+                      ) : (
+                        <>Create project</>
+                      )}
                     </button>
                   </div>
                 </div>
-              ))}
-              {savedProjects.length > 5 && (
-                <div className="text-center pt-4">
-                  <p className="text-gray-500">
-                    Showing 5 of {savedProjects.length} projects
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Create New Project Form */}
-        <div id="create" className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center">
-              <div className="text-white">
-                <PackageIcon />
               </div>
-            </div>
-            <h2 className="text-2xl font-bold text-black">Create New Project</h2>
-          </div>
+            </section>
 
-          <div className="space-y-8">
-            {/* Product Name */}
-            <div>
-              <label className="block text-sm font-semibold text-black mb-3">
-                Product Name *
-              </label>
-              <input
-                type="text"
-                value={formData.productName}
-                onChange={(e) => handleInputChange('productName', e.target.value)}
-                placeholder="e.g., MyAwesome App, CloudSync Pro, DataViz Dashboard"
-                className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-400 text-lg"
-              />
-            </div>
-
-            {/* Tone Selection */}
-            <div>
-              <label className="block text-sm font-semibold text-black mb-4">
-                Documentation Tone
-              </label>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {toneOptions.map((tone) => (
+            {/* RECENT */}
+            <section id="projects" className="scroll-mt-6">
+              <div className="mb-5 flex items-end justify-between">
+                <h2 className="text-[20px] font-medium tracking-tight">
+                  Recent
+                </h2>
+                {savedProjects.length > 0 && (
                   <button
-                    key={tone.value}
-                    onClick={() => handleInputChange('tone', tone.value)}
-                    className={`p-4 border rounded-xl text-left transition-all duration-300 ${
-                      formData.tone === tone.value
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-200 hover:border-gray-400 bg-white text-black'
-                    }`}
+                    onClick={handleClearAllProjects}
+                    className="text-[13px] text-muted-foreground transition-colors hover:text-destructive"
                   >
-                    <div className="font-semibold mb-2">{tone.label}</div>
-                    <div className={`text-sm ${formData.tone === tone.value ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {tone.description}
-                    </div>
+                    Clear all
                   </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Prompt */}
-            <div>
-              <label className="block text-sm font-semibold text-black mb-3">
-                Custom Instructions (Optional)
-              </label>
-              <textarea
-                value={formData.prompt}
-                onChange={(e) => handleInputChange('prompt', e.target.value)}
-                placeholder="Describe what kind of documentation you want to create, specific requirements, target audience, etc."
-                rows={5}
-                className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none text-black placeholder-gray-400"
-              />
-              <p className="text-sm text-gray-500 mt-2">
-                Leave empty to use the default prompt based on your product name and tone.
-              </p>
-            </div>
-
-            {/* Create Button */}
-            <div className="flex justify-end pt-6">
-              <button
-                onClick={handleCreateProject}
-                disabled={isCreating || !formData.productName.trim()}
-                className={`flex items-center gap-3 px-8 py-4 text-white font-semibold rounded-xl transition-all duration-300 ${
-                  isCreating || !formData.productName.trim()
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-black hover:bg-gray-800 shadow-lg hover:shadow-xl'
-                }`}
-              >
-                {isCreating ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <PlusIcon />
-                    Create Project
-                  </>
                 )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Info Card */}
-        <div className="mt-12 bg-gray-50 border border-gray-200 rounded-2xl p-6">
-          <div className="flex gap-4">
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
-              <div className="text-white">
-                <FileIcon size={20} />
               </div>
-            </div>
-            <div>
-              <h3 className="font-semibold text-black mb-2">What happens next?</h3>
-              <p className="text-gray-600 leading-relaxed">
-                You'll be taken to the visual flow editor where you can create connected documentation nodes,
-                add images, define issues and solutions, and publish clean CSV documentation.
-              </p>
-            </div>
+
+              {savedProjects.length === 0 ? (
+                <div className="border border-dashed border-border/60 bg-card/20 px-6 py-10 text-center text-[14px] text-muted-foreground">
+                  No projects yet. Create one above to get started.
+                </div>
+              ) : (
+                <ul className="divide-y divide-border/70 overflow-hidden border border-border/70 bg-card/30">
+                  {savedProjects.slice(0, 6).map((project) => (
+                    <li
+                      key={project.id}
+                      onClick={() => handleOpenProject(project)}
+                      className="group grid cursor-pointer grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-card/70"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate text-[15px] font-medium tracking-tight">
+                          {project.name}
+                        </div>
+                        <div className="mt-1 text-[12.5px] text-muted-foreground">
+                          {formatDate(project.createdAt)}
+                        </div>
+                      </div>
+                      <span className="text-[12px] uppercase tracking-[0.12em] text-primary/80">
+                        {project.tone}
+                      </span>
+                      <button
+                        onClick={(e) => handleDeleteProject(project.id, e)}
+                        className="text-[18px] leading-none text-muted-foreground/60 opacity-0 transition-all hover:text-destructive group-hover:opacity-100"
+                        title="Delete"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {savedProjects.length > 6 && (
+                <p className="mt-2 text-right text-[12.5px] text-muted-foreground">
+                  +{savedProjects.length - 6} more
+                </p>
+              )}
+            </section>
           </div>
+
+          {/* ——— SIDEBAR COLUMN — TEMPLATES ——— */}
+          <aside id="templates" className="scroll-mt-6">
+            <h2 className="mb-5 text-[20px] font-medium tracking-tight">
+              Templates
+            </h2>
+
+            <div className="flex flex-col overflow-hidden border border-border/70 bg-card/30">
+              {quickStartTemplates.map((template, i) => (
+                <button
+                  key={template.name}
+                  onClick={() => handleQuickStart(template)}
+                  className={cn(
+                    "flex flex-col gap-1.5 px-5 py-4 text-left transition-colors hover:bg-card/70",
+                    i < quickStartTemplates.length - 1 &&
+                      "border-b border-border/60"
+                  )}
+                >
+                  <span className="text-[15px] font-medium tracking-tight">
+                    {template.name}
+                  </span>
+                  <span className="text-[12px] uppercase tracking-[0.12em] text-primary/70">
+                    {template.tone}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-3 text-[12.5px] text-muted-foreground">
+              Click to seed the form.
+            </p>
+          </aside>
         </div>
       </div>
     </div>
