@@ -1,56 +1,75 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import React, { useCallback, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 type Project = {
   id: string;
   name: string;
   description: string | null;
-  created_at: string;
+};
+
+type Agent = {
+  id: string;
+  name: string;
+  role: string | null;
+  description: string | null;
+  is_published: boolean;
+  public_slug: string | null;
   updated_at: string;
 };
 
-export default function Home() {
+export default function ProjectDetail() {
   const router = useRouter();
-  const [projects, setProjects] = useState<Project[]>([]);
+  const params = useParams<{ id: string }>();
+  const projectId = params.id;
+
+  const [project, setProject] = useState<Project | null>(null);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const loadProjects = useCallback(async () => {
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("");
+  const [description, setDescription] = useState("");
+
+  const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch("/api/projects", { cache: "no-store" });
+    const res = await fetch(`/api/projects/${projectId}`, { cache: "no-store" });
     if (res.status === 401) {
       router.push("/signin");
       return;
     }
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError(body?.error || "Failed to load projects");
+      setError(body?.error || "Failed to load");
       setLoading(false);
       return;
     }
-    setProjects(body.projects ?? []);
+    setProject(body.project);
+    setAgents(body.agents || []);
     setLoading(false);
-  }, [router]);
+  }, [projectId, router]);
 
   useEffect(() => {
-    loadProjects();
-  }, [loadProjects]);
+    load();
+  }, [load]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || creating) return;
     setCreating(true);
     setError(null);
-    const res = await fetch("/api/projects", {
+    const res = await fetch(`/api/projects/${projectId}/agents`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), description: description.trim() || null }),
+      body: JSON.stringify({
+        name: name.trim(),
+        role: role.trim() || null,
+        description: description.trim() || null,
+      }),
     });
     const body = await res.json().catch(() => ({}));
     setCreating(false);
@@ -58,77 +77,93 @@ export default function Home() {
       setError(body?.error || "Create failed");
       return;
     }
-    setName("");
-    setDescription("");
-    router.push(`/projects/${body.project.id}`);
+    router.push(`/agent/${body.agent.id}`);
   };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Delete this project and every agent inside it?")) return;
-    const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+    if (!confirm("Delete this agent and all its nodes?")) return;
+    const res = await fetch(`/api/agents/${id}`, { method: "DELETE" });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       setError(body?.error || "Delete failed");
       return;
     }
-    setProjects((p) => p.filter((x) => x.id !== id));
+    setAgents((a) => a.filter((x) => x.id !== id));
   };
 
-  const formatDate = (iso: string) => {
-    const d = new Date(iso);
-    return `${d.toLocaleDateString()} · ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-  };
+  if (loading && !project) {
+    return (
+      <div className="-m-4 min-h-[calc(100vh-4rem)] bg-background text-foreground">
+        <div className="mx-auto max-w-6xl px-8 py-12 text-[14px] text-muted-foreground">
+          Loading…
+        </div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="-m-4 min-h-[calc(100vh-4rem)] bg-background text-foreground">
+        <div className="mx-auto max-w-6xl px-8 py-12 text-[14px] text-muted-foreground">
+          Project not found.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="-m-4 min-h-[calc(100vh-4rem)] bg-background text-foreground">
       <div className="mx-auto max-w-6xl px-8 py-12">
-        <div className="mb-14">
-          <h1 className="text-[2.5rem] font-medium leading-[1.05] tracking-[-0.02em]">
-            Projects
+        <div className="mb-10">
+          <h1 className="text-[2rem] font-medium leading-[1.05] tracking-[-0.02em]">
+            {project.name}
           </h1>
-          <p className="mt-3 text-[16px] text-muted-foreground">
-            A project is a team (e.g. &ldquo;finance&rdquo;). Each project holds one or more agents.
-          </p>
+          {project.description && (
+            <p className="mt-3 text-[15px] text-muted-foreground">{project.description}</p>
+          )}
         </div>
 
-        <section id="create" className="mb-14 scroll-mt-6">
-          <h2 className="mb-5 text-[20px] font-medium tracking-tight">New project</h2>
-          <form
-            onSubmit={handleCreate}
-            className="border border-border/70 bg-card/30"
-          >
+        <section className="mb-12">
+          <h2 className="mb-5 text-[18px] font-medium tracking-tight">New agent</h2>
+          <form onSubmit={handleCreate} className="border border-border/70 bg-card/30">
             <div className="divide-y divide-border/60">
               <div className="grid grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-[160px_1fr] sm:gap-6 sm:items-center">
-                <label htmlFor="projectName" className="text-[14px] text-muted-foreground">
-                  Name
-                </label>
+                <label className="text-[14px] text-muted-foreground">Name</label>
                 <input
-                  id="projectName"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="finance team"
+                  placeholder="tax agent"
+                  className="w-full rounded-none border border-border/70 bg-background/40 px-3 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary/70 focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-[160px_1fr] sm:gap-6 sm:items-center">
+                <label className="text-[14px] text-muted-foreground">
+                  Role
+                  <span className="ml-2 text-[12px] text-muted-foreground/60">optional</span>
+                </label>
+                <input
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  placeholder="tax specialist, support lead…"
                   className="w-full rounded-none border border-border/70 bg-background/40 px-3 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary/70 focus:outline-none"
                 />
               </div>
               <div className="grid grid-cols-1 gap-3 px-6 py-5 sm:grid-cols-[160px_1fr] sm:gap-6 sm:items-start">
-                <label htmlFor="projectDesc" className="pt-1 text-[14px] text-muted-foreground">
+                <label className="pt-1 text-[14px] text-muted-foreground">
                   Description
                   <span className="ml-2 text-[12px] text-muted-foreground/60">optional</span>
                 </label>
                 <textarea
-                  id="projectDesc"
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="What this group of agents is for…"
+                  placeholder="What this agent helps with…"
                   className="w-full resize-none rounded-none border border-border/70 bg-background/40 px-3 py-2.5 text-[14.5px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary/70 focus:outline-none"
                 />
               </div>
               <div className="flex items-center justify-end gap-4 bg-background/30 px-6 py-4">
-                {error && (
-                  <span className="text-[12px] text-destructive">{error}</span>
-                )}
+                {error && <span className="text-[12px] text-destructive">{error}</span>}
                 <button
                   type="submit"
                   disabled={!name.trim() || creating}
@@ -139,7 +174,7 @@ export default function Home() {
                       : "border-primary/70 bg-primary text-primary-foreground hover:bg-primary/90"
                   )}
                 >
-                  {creating ? "Creating…" : "Create project"}
+                  {creating ? "Creating…" : "Create agent"}
                 </button>
               </div>
             </div>
@@ -147,34 +182,35 @@ export default function Home() {
         </section>
 
         <section>
-          <h2 className="mb-5 text-[20px] font-medium tracking-tight">Recent</h2>
-          {loading ? (
+          <h2 className="mb-5 text-[18px] font-medium tracking-tight">Agents</h2>
+          {agents.length === 0 ? (
             <div className="border border-dashed border-border/60 bg-card/20 px-6 py-10 text-center text-[14px] text-muted-foreground">
-              Loading…
-            </div>
-          ) : projects.length === 0 ? (
-            <div className="border border-dashed border-border/60 bg-card/20 px-6 py-10 text-center text-[14px] text-muted-foreground">
-              No projects yet. Create one above to get started.
+              No agents yet in this project.
             </div>
           ) : (
             <ul className="divide-y divide-border/70 overflow-hidden border border-border/70 bg-card/30">
-              {projects.map((p) => (
+              {agents.map((a) => (
                 <li
-                  key={p.id}
-                  onClick={() => router.push(`/projects/${p.id}`)}
-                  className="group grid cursor-pointer grid-cols-[1fr_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-card/70"
+                  key={a.id}
+                  onClick={() => router.push(`/agent/${a.id}`)}
+                  className="group grid cursor-pointer grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-4 transition-colors hover:bg-card/70"
                 >
                   <div className="min-w-0">
                     <div className="truncate text-[15px] font-medium tracking-tight">
-                      {p.name}
+                      {a.name}
                     </div>
                     <div className="mt-1 text-[12.5px] text-muted-foreground">
-                      {formatDate(p.updated_at)}
-                      {p.description ? ` · ${p.description}` : ""}
+                      {a.role ? `${a.role} · ` : ""}
+                      {a.is_published && a.public_slug
+                        ? `published · /a/${a.public_slug}`
+                        : "draft"}
                     </div>
                   </div>
+                  <span className="text-[12px] uppercase tracking-[0.12em] text-primary/80">
+                    {a.is_published ? "live" : "draft"}
+                  </span>
                   <button
-                    onClick={(e) => handleDelete(p.id, e)}
+                    onClick={(e) => handleDelete(a.id, e)}
                     className="text-[18px] leading-none text-muted-foreground/60 opacity-0 transition-all hover:text-destructive group-hover:opacity-100"
                     title="Delete"
                   >

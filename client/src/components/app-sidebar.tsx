@@ -16,10 +16,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { title: "Workspace", url: "/home" },
-  { title: "Templates", url: "/home#templates" },
-  { title: "Recent", url: "/home#projects" },
-  { title: "Create", url: "/home#create" },
+  { title: "Projects", url: "/home" },
+  { title: "Settings", url: "/settings" },
   { title: "Landing", url: "/" },
   { title: "GitHub", url: "https://github.com/KushalPraja/persona", external: true },
 ];
