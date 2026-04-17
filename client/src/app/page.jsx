@@ -6,8 +6,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Reveal } from "@/components/Reveal";
+import { HeroChat } from "@/components/HeroChat";
 import {
-  GraphHero,
   MarkNotion,
   MarkAnthropic,
   MarkOpenAI,
@@ -231,13 +231,13 @@ function Header() {
             GitHub
           </a>
           <Link
-            href="/home"
+            href="/signin"
             className={cn(
               btn,
               "-ml-px border border-primary/70 bg-primary text-primary-foreground hover:bg-primary/90"
             )}
           >
-            Open app
+            Sign in
           </Link>
         </div>
       </div>
@@ -250,145 +250,24 @@ function Header() {
  * —————————————————————————————————————————————————————————————— */
 
 function Hero() {
-  const capabilities = [
-    ["typed nodes", "not chunks"],
-    ["any model", "one runtime"],
-    ["provenance", "by default"],
-    ["self-hostable", "byo postgres"],
-  ];
-
   return (
-    <section className="relative overflow-hidden border-b border-border/60">
-      <div className="grid-bg absolute inset-0" aria-hidden />
-      <div className="amber-wash absolute inset-0" aria-hidden />
+    <HeroChat
+      title={
+        <>
+          <h1 className="text-[2.75rem] font-medium leading-[1.02] tracking-[-0.03em] text-foreground sm:text-[3.5rem] md:text-[4.25rem]">
+            A knowledge graph
+            <br />
+            for software{" "}
+            <span className="text-primary">that remembers</span>.
+          </h1>
 
-      <div className="relative mx-auto max-w-6xl px-6 sm:px-8">
-        <div className="grid grid-cols-1 items-center gap-12 py-20 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-24">
-          <Reveal>
-            <h1 className="text-[2.75rem] font-medium leading-[1.02] tracking-[-0.03em] text-foreground sm:text-[3.5rem] md:text-[4rem]">
-              A knowledge graph
-              <br />
-              for software{" "}
-              <span className="text-primary">that remembers</span>.
-            </h1>
-
-            <p className="mt-6 max-w-md text-[15px] leading-relaxed text-muted-foreground">
-              Model your domain as typed nodes. Deploy agents that read from
-              them — with provenance, by default. No chunks, no guessing.
-            </p>
-
-            <div className="mt-8 flex items-center">
-              <Link
-                href="/home"
-                className="inline-flex h-10 items-center justify-center rounded-none border border-primary/70 bg-primary px-5 text-[13px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Open app
-              </Link>
-              <a
-                href="https://github.com/KushalPraja/persona"
-                target="_blank"
-                rel="noreferrer"
-                className="-ml-px inline-flex h-10 items-center justify-center rounded-none border border-border/70 bg-card/40 px-5 text-[13px] font-medium tracking-tight text-muted-foreground transition-colors hover:border-border hover:bg-card/80 hover:text-foreground"
-              >
-                GitHub
-              </a>
-            </div>
-
-            {/* capability grid */}
-            <div className="mt-10 grid max-w-md grid-cols-2 gap-x-6 gap-y-3 border-t border-border/50 pt-6">
-              {capabilities.map(([k, v]) => (
-                <div
-                  key={k}
-                  className="flex items-baseline gap-2 font-mono text-[11px] text-muted-foreground"
-                >
-                  <span className="text-primary/80">+</span>
-                  <span className="text-foreground/90">{k}</span>
-                  <span className="text-border">/</span>
-                  <span>{v}</span>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-
-          {/* product frame */}
-          <Reveal delay={180} className="relative">
-            <Frame>
-              <div className="relative overflow-hidden rounded-md border border-border/80 bg-card/70 backdrop-blur-sm">
-                {/* accent rail */}
-                <div
-                  className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
-                  aria-hidden
-                />
-
-                {/* breadcrumb header */}
-                <div className="flex items-center justify-between border-b border-border/60 bg-background/40 px-4 py-2.5 font-mono text-[11px]">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <span className="inline-block h-2 w-2 rounded-[2px] bg-primary/80" />
-                    <span className="text-foreground/80">graph</span>
-                    <span className="text-border">/</span>
-                    <span>main</span>
-                    <span className="text-border">/</span>
-                    <span className="text-foreground/50">customers</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-muted-foreground">
-                    <span>
-                      <span className="text-foreground/80">6</span>n
-                    </span>
-                    <span className="text-border">·</span>
-                    <span>
-                      <span className="text-foreground/80">12</span>e
-                    </span>
-                  </div>
-                </div>
-
-                {/* schema hint */}
-                <div className="hidden items-center gap-4 border-b border-border/60 bg-background/25 px-4 py-2 font-mono text-[11px] text-muted-foreground sm:flex">
-                  <span className="text-primary/70">type</span>
-                  <span className="text-foreground/80">Customer</span>
-                  <span className="text-border">{"{"}</span>
-                  <span className="text-foreground/60">uses:</span>
-                  <span className="text-foreground/80">UseCase[]</span>
-                  <span className="text-border">{"}"}</span>
-                </div>
-
-                {/* graph */}
-                <div className="relative text-foreground/80">
-                  <GraphHero className="w-full" />
-                </div>
-
-                {/* grounded-answer strip */}
-                <div className="border-t border-border/60 bg-background/50 px-4 py-3 font-mono text-[11px]">
-                  <div className="flex items-start gap-3">
-                    <span className="mt-0.5 shrink-0 rounded-sm border border-primary/40 bg-primary/10 px-1.5 py-px text-[10px] uppercase tracking-[0.18em] text-primary/90">
-                      ask
-                    </span>
-                    <span className="text-foreground/75">
-                      how do customers use Feature X?
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between gap-3 text-muted-foreground">
-                    <span className="truncate">
-                      <span className="text-primary/80">→</span> Customer{" "}
-                      <span className="text-border">·</span> Use case{" "}
-                      <span className="text-border">·</span> Feature
-                    </span>
-                    <span className="shrink-0">
-                      <span className="text-foreground/70">3 sources</span>{" "}
-                      <span className="mx-1.5 text-border">|</span>
-                      1.8s{" "}
-                      <span className="mx-1.5 text-border">|</span>
-                      <span className="text-primary/80">✓</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Frame>
-
-            <div className="pointer-events-none absolute inset-x-10 -bottom-6 h-10 rounded-full bg-primary/20 blur-3xl" />
-          </Reveal>
-        </div>
-      </div>
-    </section>
+          <p className="mt-6 max-w-md text-[15.5px] leading-relaxed text-muted-foreground">
+            Model your domain as typed nodes. Deploy agents that read from
+            them — with provenance, by default. No chunks, no guessing.
+          </p>
+        </>
+      }
+    />
   );
 }
 
@@ -418,16 +297,16 @@ function Integrations() {
 
 function Features() {
   return (
-    <section id="primitives" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-20 sm:px-8">
+    <section id="primitives" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16 sm:px-8">
       <Reveal>
-        <div className="mb-10 flex items-end justify-between gap-6">
+        <div className="mb-8 flex items-end justify-between gap-6">
           <div>
             <Eyebrow>[ 01 ] / primitives</Eyebrow>
-            <h2 className="mt-3 max-w-xl text-3xl font-medium leading-[1.1] tracking-[-0.02em] sm:text-4xl">
+            <h2 className="mt-3 max-w-xl text-2xl font-medium leading-[1.1] tracking-[-0.02em] sm:text-[28px]">
               The building blocks.
             </h2>
           </div>
-          <p className="hidden max-w-xs text-sm leading-relaxed text-muted-foreground sm:block">
+          <p className="hidden max-w-xs text-[12.5px] leading-relaxed text-muted-foreground sm:block">
             Six primitives that define how Persona thinks about knowledge —
             each first-class, none optional.
           </p>
@@ -439,23 +318,23 @@ function Features() {
           {features.map(({ tag, title, body, Art }, i) => (
             <Reveal
               key={title}
-              delay={(i % 3) * 80}
+              delay={i * 90}
               as="article"
               className="group relative bg-card/40 backdrop-blur-sm transition-colors hover:bg-card/80"
             >
               {/* illustration cell */}
-              <div className="relative flex h-32 items-center justify-center border-b border-border/60 bg-background/40 text-foreground/60 transition-colors group-hover:text-foreground/85">
-                <Art className="h-20" />
-                <span className="absolute left-3 top-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              <div className="relative flex h-24 items-center justify-center border-b border-border/60 bg-background/40 text-foreground/60 transition-colors group-hover:text-foreground/85">
+                <Art className="h-14" />
+                <span className="absolute left-3 top-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground">
                   {String(i + 1).padStart(2, "0")} · {tag}
                 </span>
               </div>
               {/* copy */}
-              <div className="p-6">
-                <h3 className="text-[15px] font-medium tracking-tight">
+              <div className="px-5 py-4">
+                <h3 className="text-[13px] font-medium tracking-tight">
                   {title}
                 </h3>
-                <p className="mt-2 text-[13.5px] leading-[1.65] text-muted-foreground">
+                <p className="mt-1.5 text-[12px] leading-[1.6] text-muted-foreground">
                   {body}
                 </p>
               </div>
@@ -594,15 +473,15 @@ function CTA() {
             <div className="grid-bg absolute inset-0 opacity-60" aria-hidden />
             <div className="relative flex flex-col items-start justify-between gap-8 px-8 py-16 sm:flex-row sm:items-center sm:px-12">
               <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-                Open the app, start with a blank canvas, or import what
+                Sign in, start with a blank canvas, or import what
                 you already have. No signup ceremony.
               </p>
               <div className="flex shrink-0 items-center">
                 <Link
-                  href="/home"
+                  href="/signin"
                   className="inline-flex h-10 items-center justify-center rounded-none border border-primary/70 bg-primary px-5 text-[13px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90"
                 >
-                  Open app
+                  Sign in
                 </Link>
                 <a
                   href="https://github.com/KushalPraja/persona"
