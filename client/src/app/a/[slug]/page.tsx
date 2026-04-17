@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { Loading } from "@/components/Loading";
 
 type Agent = {
   id: string;
@@ -78,8 +79,8 @@ export default function PublicAgentPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-[14px] text-muted-foreground">
-        Loading…
+      <div className="min-h-screen bg-background">
+        <Loading label="loading agent" variant="page" />
       </div>
     );
   }

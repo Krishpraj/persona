@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Reveal } from "@/components/Reveal";
 import { cn } from "@/lib/utils";
@@ -80,7 +80,17 @@ function Header() {
  * —————————————————————————————————————————————————————————————— */
 
 export default function SignIn() {
+  return (
+    <Suspense fallback={null}>
+      <SignInInner />
+    </Suspense>
+  );
+}
+
+function SignInInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get("next") || "/home";
   const [mode, setMode] = useState("signin"); // "signin" | "signup" | "magic"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -107,7 +117,7 @@ export default function SignIn() {
           password,
         });
         if (error) throw error;
-        router.push("/home");
+        router.push(nextPath);
         return;
       }
 
@@ -133,7 +143,7 @@ export default function SignIn() {
           options: {
             emailRedirectTo:
               typeof window !== "undefined"
-                ? `${window.location.origin}/home`
+                ? `${window.location.origin}${nextPath}`
                 : undefined,
           },
         });

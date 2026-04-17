@@ -34,24 +34,47 @@ async function loadAgentContext(agentId: string) {
   return { agent: agent as AgentRow, nodes: (nodes ?? []) as NodeRow[] };
 }
 
+function serializeNode(n: NodeRow): string | null {
+  const label = (n.data?.["label"] as string) || n.type;
+  if (n.type === "image") {
+    const caption = (n.data?.["caption"] as string) || "";
+    const alt = (n.data?.["alt"] as string) || "";
+    const url = (n.data?.["imageUrl"] as string) || "";
+    if (!url && !caption && !alt) return null;
+    const lines = [`# ${label} (image)`];
+    if (caption) lines.push(caption);
+    if (alt && alt !== caption) lines.push(`alt: ${alt}`);
+    if (url) lines.push(`url: ${url}`);
+    return lines.join("\n");
+  }
+  if (n.type === "link") {
+    const url = (n.data?.["url"] as string) || "";
+    const description = (n.data?.["description"] as string) || "";
+    if (!url && !description) return null;
+    const lines = [`# ${label} (link)`];
+    if (description) lines.push(description);
+    if (url) lines.push(`url: ${url}`);
+    return lines.join("\n");
+  }
+  // text / knowledge / unknown -> treat as text content
+  const content =
+    (n.data?.["content"] as string) || (n.data?.["text"] as string) || "";
+  if (!content) return null;
+  return `# ${label}\n${content}`;
+}
+
 function buildSystemPrompt(agent: AgentRow, nodes: NodeRow[]): string {
   const parts: string[] = [];
   parts.push(
     agent.system_prompt?.trim() ||
       `You are ${agent.name}${agent.role ? `, acting as a ${agent.role}` : ""}. Answer questions using the knowledge below.`
   );
-  if (nodes.length > 0) {
+  const serialized = nodes
+    .map(serializeNode)
+    .filter((s): s is string => !!s);
+  if (serialized.length > 0) {
     parts.push("\n\n--- Knowledge ---");
-    for (const n of nodes) {
-      const label = (n.data?.["label"] as string) || n.type;
-      const content =
-        (n.data?.["content"] as string) ||
-        (n.data?.["text"] as string) ||
-        JSON.stringify(n.data);
-      if (content && content !== "{}") {
-        parts.push(`\n# ${label}\n${content}`);
-      }
-    }
+    for (const chunk of serialized) parts.push(`\n${chunk}`);
   }
   return parts.join("");
 }

@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Loading } from "@/components/Loading";
 
 type Project = {
   id: string;
@@ -95,9 +96,7 @@ export default function ProjectDetail() {
   if (loading && !project) {
     return (
       <div className="-m-4 min-h-[calc(100vh-4rem)] bg-background text-foreground">
-        <div className="mx-auto max-w-6xl px-8 py-12 text-[14px] text-muted-foreground">
-          Loading…
-        </div>
+        <Loading label="loading project" variant="page" />
       </div>
     );
   }

@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Loading } from "@/components/Loading";
 
 type Provider = "openai" | "anthropic" | "ollama";
 
@@ -241,9 +242,7 @@ export default function SettingsPage() {
         <section>
           <h2 className="mb-5 text-[18px] font-medium tracking-tight">Your keys</h2>
           {loading ? (
-            <div className="border border-dashed border-border/60 bg-card/20 px-6 py-10 text-center text-[14px] text-muted-foreground">
-              Loading…
-            </div>
+            <Loading label="loading keys" />
           ) : creds.length === 0 ? (
             <div className="border border-dashed border-border/60 bg-card/20 px-6 py-10 text-center text-[14px] text-muted-foreground">
               No credentials yet.
@@ -253,41 +252,46 @@ export default function SettingsPage() {
               {creds.map((c) => (
                 <li
                   key={c.id}
-                  className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-4"
+                  className="flex flex-wrap items-center gap-4 px-5 py-4"
                 >
-                  <div className="min-w-0">
-                    <div className="truncate text-[15px] font-medium tracking-tight">
-                      {c.label}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          "inline-flex h-6 items-center rounded-none border px-2 font-mono text-[10px] uppercase tracking-[0.18em]",
+                          c.is_active
+                            ? "border-primary/70 bg-primary/10 text-primary"
+                            : "border-border/70 bg-background/40 text-muted-foreground"
+                        )}
+                      >
+                        {c.is_active ? "active" : "inactive"}
+                      </span>
+                      <span className="truncate text-[15px] font-medium tracking-tight">
+                        {c.label}
+                      </span>
                     </div>
-                    <div className="mt-1 text-[12.5px] text-muted-foreground">
+                    <div className="mt-1.5 font-mono text-[11.5px] text-muted-foreground/80">
                       {c.provider} · {c.key_preview}
                       {c.model_default ? ` · ${c.model_default}` : ""}
                       {c.base_url ? ` · ${c.base_url}` : ""}
                     </div>
                   </div>
-                  <span
-                    className={cn(
-                      "text-[11px] uppercase tracking-[0.12em]",
-                      c.is_active ? "text-primary" : "text-muted-foreground"
+                  <div className="flex shrink-0 items-center gap-2">
+                    {!c.is_active && (
+                      <button
+                        onClick={() => handleActivate(c.id)}
+                        className="inline-flex h-8 items-center justify-center rounded-none border border-border/70 bg-background/40 px-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:border-primary/70 hover:text-primary"
+                      >
+                        activate
+                      </button>
                     )}
-                  >
-                    {c.is_active ? "active" : "inactive"}
-                  </span>
-                  {!c.is_active && (
                     <button
-                      onClick={() => handleActivate(c.id)}
-                      className="text-[12px] text-muted-foreground hover:text-primary"
+                      onClick={() => handleDelete(c.id)}
+                      className="inline-flex h-8 items-center justify-center rounded-none border border-border/70 bg-background/40 px-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:border-destructive/60 hover:text-destructive"
                     >
-                      activate
+                      delete
                     </button>
-                  )}
-                  {c.is_active && <span />}
-                  <button
-                    onClick={() => handleDelete(c.id)}
-                    className="text-[12px] text-muted-foreground hover:text-destructive"
-                  >
-                    delete
-                  </button>
+                  </div>
                 </li>
               ))}
             </ul>
