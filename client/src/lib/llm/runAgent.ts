@@ -1,6 +1,7 @@
 import { generateText, type CoreMessage } from "ai";
 import { createServiceClient } from "../supabase-server";
 import { getModelFor } from "./provider";
+import { loadMcpClientsForAgent } from "../mcp/loader";
 
 type AgentRow = {
   id: string;
@@ -91,6 +92,16 @@ export async function runAgentChat(
     ...history.map((h): CoreMessage => ({ role: h.role, content: h.content })),
     { role: "user", content: userMessage },
   ];
-  const { text } = await generateText({ model, messages });
-  return text;
+  const mcp = await loadMcpClientsForAgent(agentId);
+  try {
+    const hasTools = Object.keys(mcp.tools).length > 0;
+    const { text } = await generateText({
+      model,
+      messages,
+      ...(hasTools ? { tools: mcp.tools, maxSteps: 5 } : {}),
+    });
+    return text;
+  } finally {
+    await mcp.close();
+  }
 }

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Loading } from "@/components/Loading";
+import McpSection from "./McpSection";
 
 type Provider = "openai" | "anthropic" | "ollama";
 
@@ -297,6 +298,8 @@ export default function SettingsPage() {
             </ul>
           )}
         </section>
+
+        <McpSection />
       </div>
     </div>
   );

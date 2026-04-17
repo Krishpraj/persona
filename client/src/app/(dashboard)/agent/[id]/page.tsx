@@ -7,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   ReactFlow,
@@ -471,6 +472,12 @@ function AgentCanvas() {
               </>
             )}
           </div>
+          <Link
+            href={`/agent/${agentId}/settings`}
+            className="inline-flex h-9 items-center rounded-none border border-border/70 bg-background/40 px-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground"
+          >
+            integrations
+          </Link>
           <button
             onClick={handlePublish}
             disabled={publishing}
