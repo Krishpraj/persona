@@ -1,7 +1,9 @@
-// MCP template registry — curated list of server types a user can connect from /settings.
-// Each template declares its transport and the config fields we collect.
-// Fields flagged `secret: true` are bundled into a single Vault-encrypted JSON secret.
+// MCP template registry. First-party "builtin" templates run in-process against
+// the project's own data; "external" templates would open network MCP sessions
+// (not yet shipped). Every project gets exactly one `project-knowledge` row
+// auto-created by a DB trigger.
 
+export type McpKind = "builtin" | "external";
 export type McpTransport = "sse" | "http";
 
 export type McpConfigField = {
@@ -17,66 +19,76 @@ export type McpServerTemplate = {
   id: string;
   name: string;
   description: string;
-  transport: McpTransport;
+  kind: McpKind;
+  transport?: McpTransport;
   configSchema: McpConfigField[];
   buildHeaders?: (cfg: Record<string, string>) => Record<string, string>;
 };
 
-const bearerHeaders = (c: Record<string, string>): Record<string, string> =>
-  c.authToken ? { Authorization: `Bearer ${c.authToken}` } : {};
-
 export const MCP_TEMPLATES: McpServerTemplate[] = [
   {
-    id: "custom-sse",
-    name: "Custom SSE Server",
+    id: "project-knowledge",
+    name: "Project Knowledge",
     description:
-      "Any MCP server that speaks Server-Sent Events. Paste the URL and (optionally) a bearer token.",
-    transport: "sse",
-    configSchema: [
-      {
-        key: "url",
-        label: "Server URL",
-        placeholder: "https://mcp.example.com/sse",
-        required: true,
-        secret: false,
-        type: "url",
-      },
-      {
-        key: "authToken",
-        label: "Bearer Token",
-        placeholder: "optional",
-        required: false,
-        secret: true,
-        type: "password",
-      },
-    ],
-    buildHeaders: bearerHeaders,
+      "Query the docs, node graphs and CSVs attached to this project. Auto-attached to every agent in the project.",
+    kind: "builtin",
+    configSchema: [],
   },
   {
     id: "custom-http",
-    name: "Custom HTTP (Streamable)",
+    name: "Custom MCP (Streamable HTTP)",
     description:
-      "Any Streamable-HTTP MCP server. Paste the endpoint and (optionally) a bearer token.",
+      "Connect any MCP server that speaks the streamable HTTP transport. Tools it exposes become available to agents you opt in.",
+    kind: "external",
     transport: "http",
     configSchema: [
       {
         key: "url",
         label: "Server URL",
-        placeholder: "https://mcp.example.com/mcp",
+        placeholder: "https://example.com/mcp",
         required: true,
         secret: false,
         type: "url",
       },
       {
-        key: "authToken",
-        label: "Bearer Token",
+        key: "token",
+        label: "Bearer token",
         placeholder: "optional",
         required: false,
         secret: true,
         type: "password",
       },
     ],
-    buildHeaders: bearerHeaders,
+    buildHeaders: (cfg) =>
+      cfg.token ? { Authorization: `Bearer ${cfg.token}` } : {},
+  },
+  {
+    id: "custom-sse",
+    name: "Custom MCP (SSE)",
+    description:
+      "Connect any MCP server that speaks the legacy SSE transport. Tools it exposes become available to agents you opt in.",
+    kind: "external",
+    transport: "sse",
+    configSchema: [
+      {
+        key: "url",
+        label: "Server URL",
+        placeholder: "https://example.com/sse",
+        required: true,
+        secret: false,
+        type: "url",
+      },
+      {
+        key: "token",
+        label: "Bearer token",
+        placeholder: "optional",
+        required: false,
+        secret: true,
+        type: "password",
+      },
+    ],
+    buildHeaders: (cfg) =>
+      cfg.token ? { Authorization: `Bearer ${cfg.token}` } : {},
   },
 ];
 

@@ -1,0 +1,1 @@
+export { buildProjectKnowledgeMcp } from "./projectKnowledge";

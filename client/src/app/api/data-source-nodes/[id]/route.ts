@@ -20,7 +20,7 @@ export async function PATCH(
     return NextResponse.json({ error: "nothing to update" }, { status: 400 });
 
   const { data, error } = await supabase
-    .from("agent_nodes")
+    .from("data_source_nodes")
     .update(patch)
     .eq("id", id)
     .select("id, type, position_x, position_y, data, updated_at")
@@ -38,7 +38,7 @@ export async function DELETE(
   if (isAuthResponse(ctx)) return ctx;
   const { supabase } = ctx;
   const { id } = await params;
-  const { error } = await supabase.from("agent_nodes").delete().eq("id", id);
+  const { error } = await supabase.from("data_source_nodes").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

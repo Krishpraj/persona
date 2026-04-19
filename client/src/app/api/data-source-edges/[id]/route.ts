@@ -9,7 +9,7 @@ export async function DELETE(
   if (isAuthResponse(ctx)) return ctx;
   const { supabase } = ctx;
   const { id } = await params;
-  const { error } = await supabase.from("agent_edges").delete().eq("id", id);
+  const { error } = await supabase.from("data_source_edges").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

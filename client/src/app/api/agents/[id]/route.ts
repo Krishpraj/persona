@@ -13,33 +13,14 @@ export async function GET(
   const { data: agent, error } = await supabase
     .from("agents")
     .select(
-      "id, project_id, name, role, description, system_prompt, is_published, public_slug, published_at, created_at, updated_at, mcp_integration_ids"
+      "id, project_id, name, role, description, system_prompt, is_published, public_slug, published_at, created_at, updated_at, mcp_integration_ids, skill_ids"
     )
     .eq("id", id)
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!agent) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const [nodesRes, edgesRes] = await Promise.all([
-    supabase
-      .from("agent_nodes")
-      .select("id, type, position_x, position_y, data, updated_at")
-      .eq("agent_id", id),
-    supabase
-      .from("agent_edges")
-      .select("id, source_node_id, target_node_id, label")
-      .eq("agent_id", id),
-  ]);
-  if (nodesRes.error)
-    return NextResponse.json({ error: nodesRes.error.message }, { status: 500 });
-  if (edgesRes.error)
-    return NextResponse.json({ error: edgesRes.error.message }, { status: 500 });
-
-  return NextResponse.json({
-    agent,
-    nodes: nodesRes.data,
-    edges: edgesRes.data,
-  });
+  return NextResponse.json({ agent });
 }
 
 export async function PATCH(
@@ -81,6 +62,30 @@ export async function PATCH(
     patch.mcp_integration_ids = ids;
   }
 
+  if ("skill_ids" in (body ?? {})) {
+    const raw = body.skill_ids;
+    if (!Array.isArray(raw))
+      return NextResponse.json(
+        { error: "skill_ids must be an array" },
+        { status: 400 }
+      );
+    const ids = raw.map((x) => String(x)).filter((x) => x.length > 0);
+    if (ids.length > 0) {
+      const { data: owned, error: ownErr } = await supabase
+        .from("skills")
+        .select("id")
+        .in("id", ids);
+      if (ownErr)
+        return NextResponse.json({ error: ownErr.message }, { status: 500 });
+      if ((owned?.length ?? 0) !== ids.length)
+        return NextResponse.json(
+          { error: "invalid skill_ids" },
+          { status: 400 }
+        );
+    }
+    patch.skill_ids = ids;
+  }
+
   if (!Object.keys(patch).length)
     return NextResponse.json({ error: "nothing to update" }, { status: 400 });
 
@@ -89,7 +94,7 @@ export async function PATCH(
     .update(patch)
     .eq("id", id)
     .select(
-      "id, project_id, name, role, description, system_prompt, is_published, public_slug, published_at, updated_at, mcp_integration_ids"
+      "id, project_id, name, role, description, system_prompt, is_published, public_slug, published_at, updated_at, mcp_integration_ids, skill_ids"
     )
     .maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

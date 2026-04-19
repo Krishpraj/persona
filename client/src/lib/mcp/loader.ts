@@ -2,6 +2,7 @@ import { experimental_createMCPClient, type Tool } from "ai";
 import { createServiceClient } from "../supabase-server";
 import { readSecret } from "../llm/vault";
 import { getTemplate } from "./registry";
+import { buildProjectKnowledgeMcp } from "./builtins";
 
 // A live MCP session with its exposed tools (namespaced so multiple servers don't collide)
 // plus a `close()` that MUST be awaited after the chat completes to free sockets.
@@ -13,18 +14,19 @@ export type LoadedMcp = {
 type IntegrationRow = {
   id: string;
   template_id: string;
-  vault_secret_id: string;
+  vault_secret_id: string | null;
+  project_id: string | null;
   config: Record<string, unknown>;
 };
 
 const EMPTY: LoadedMcp = { tools: {}, close: async () => {} };
 
-export async function loadMcpClientsForAgent(agentId: string): Promise<LoadedMcp> {
+export async function loadMcpToolsForAgent(agentId: string): Promise<LoadedMcp> {
   const sb = createServiceClient();
 
   const { data: agent } = await sb
     .from("agents")
-    .select("user_id, mcp_integration_ids")
+    .select("user_id, project_id, mcp_integration_ids")
     .eq("id", agentId)
     .maybeSingle();
   if (!agent) return EMPTY;
@@ -34,7 +36,7 @@ export async function loadMcpClientsForAgent(agentId: string): Promise<LoadedMcp
 
   const { data: rows } = await sb
     .from("mcp_integrations")
-    .select("id, template_id, vault_secret_id, config")
+    .select("id, template_id, vault_secret_id, project_id, config")
     .eq("user_id", agent.user_id)
     .eq("is_active", true)
     .in("id", ids);
@@ -48,6 +50,19 @@ export async function loadMcpClientsForAgent(agentId: string): Promise<LoadedMcp
       if (!template) return;
 
       try {
+        if (template.kind === "builtin") {
+          if (row.template_id === "project-knowledge") {
+            // Defense in depth: the integration must belong to this agent's project.
+            if (row.project_id && row.project_id !== agent.project_id) return;
+            const projectId = row.project_id ?? agent.project_id;
+            const builtIn = buildProjectKnowledgeMcp(projectId, agent.user_id);
+            Object.assign(tools, builtIn);
+          }
+          return;
+        }
+
+        // External MCP server (SSE or streamable HTTP)
+        if (!row.vault_secret_id) return;
         const secretJson = await readSecret(row.vault_secret_id);
         const secrets = (secretJson ? JSON.parse(secretJson) : {}) as Record<
           string,
@@ -60,8 +75,9 @@ export async function loadMcpClientsForAgent(agentId: string): Promise<LoadedMcp
         const url = String(cfg.url ?? "");
         if (!url) return;
         const headers = template.buildHeaders?.(cfg) ?? {};
+        const transport = template.transport ?? "http";
 
-        const client = await createClient(template.transport, url, headers);
+        const client = await createClient(transport, url, headers);
         const serverTools = await client.tools();
         const prefix = row.id.slice(0, 8);
         for (const [name, tool] of Object.entries(serverTools)) {
@@ -102,8 +118,6 @@ async function createClient(
       transport: { type: "sse", url, headers },
     });
   }
-  // Streamable HTTP — requires @modelcontextprotocol/sdk (separate package).
-  // Lazy-imported so SSE still works even if the SDK is missing in the environment.
   const { StreamableHTTPClientTransport } = await import(
     "@modelcontextprotocol/sdk/client/streamableHttp.js"
   );

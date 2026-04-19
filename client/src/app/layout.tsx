@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Persona — a knowledge-graph runtime for AI agents",
+  title: "Persona — ship AI agents that know your stuff",
   description:
-    "Model your domain as typed nodes. Deploy agents that read from them — with provenance, by default.",
+    "Build AI agents grounded in your docs, PDFs, CSVs and graphs. Extend with MCP servers and reusable skills. Publish in one click as a URL, an iframe, or a JSON API.",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },

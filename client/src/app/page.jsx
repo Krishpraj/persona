@@ -16,13 +16,9 @@ import {
   MarkSlack,
   MarkGithub,
   MarkLinear,
-  FeatureGraph,
-  FeatureDocs,
-  FeatureTerminal,
-  FeatureFlow,
-  FeatureGuard,
-  FeatureClock,
 } from "@/components/landing-art";
+import { DashedCircle } from "@/components/landing/DashedCircle";
+import { AgentAnatomy } from "@/components/landing/AgentAnatomy";
 import { cn } from "@/lib/utils";
 
 /* ——————————————————————————————————————————————————————————————
@@ -40,490 +36,487 @@ const integrations = [
   { name: "Linear", Mark: MarkLinear },
 ];
 
-const features = [
-  {
-    tag: "graph",
-    title: "Typed knowledge graph",
-    body: "Model entities and relationships explicitly. Retrieval follows the shape of your domain — not a pile of chunks.",
-    Art: FeatureGraph,
-  },
-  {
-    tag: "docs",
-    title: "Living documents",
-    body: "Every node renders as a document. Edit one field — every downstream agent updates instantly.",
-    Art: FeatureDocs,
-  },
-  {
-    tag: "runtime",
-    title: "Any model, one runtime",
-    body: "Route to Anthropic, OpenAI, or a local model per agent. Persona handles retrieval and provenance.",
-    Art: FeatureTerminal,
-  },
-  {
-    tag: "flow",
-    title: "Visual flow builder",
-    body: "Draw your logic as a graph. Connect triggers, nodes, agents. No YAML. No buried config.",
-    Art: FeatureFlow,
-  },
-  {
-    tag: "trust",
-    title: "Provenance by default",
-    body: "Every answer carries its source. Click a sentence, land on the node. Debug facts, not prompts.",
-    Art: FeatureGuard,
-  },
-  {
-    tag: "live",
-    title: "Continuous operation",
-    body: "Agents react to change, not to cron. Hook them into chat, helpdesk or internal tools.",
-    Art: FeatureClock,
-  },
-];
-
-const steps = [
-  { n: "01", title: "Model", body: "Sketch your domain as a graph of typed nodes and edges." },
-  { n: "02", title: "Deploy", body: "Point an agent at any subgraph. It inherits shape, not just text." },
-  { n: "03", title: "Run", body: "Edit a node; every surface reflects the change in seconds." },
+const stats = [
+  { value: "4", unit: "source kinds", note: "docs · graphs · csvs · pdfs" },
+  { value: "∞", unit: "mcp servers", note: "built-in + any custom" },
+  { value: "1-click", unit: "to publish", note: "url · iframe · json api" },
 ];
 
 const faqs = [
   {
     q: "What is Persona?",
-    a: "A workspace for building typed knowledge graphs and the AI agents that read from them.",
+    a: "A workspace for building AI agents that are grounded in your own data, extended with MCP servers and reusable skills, and published in one click as a shareable URL, an embeddable iframe, or a public JSON API.",
   },
   {
-    q: "How is it different from a RAG pipeline?",
-    a: "Persona isn't a chunk store — it's a typed graph. Retrieval is precise because the shape of your domain is explicit, not inferred.",
+    q: "How do I give an agent context?",
+    a: "Create a project and attach data sources — docs, node graphs, CSVs, or PDFs. Every agent in the project inherits a built-in project-knowledge MCP that searches across them and can query CSV rows. Edit a source and the next answer reflects it — no re-ingestion.",
+  },
+  {
+    q: "Can I plug in my own tools?",
+    a: "Yes. Connect any MCP server over streamable HTTP or SSE. Bearer tokens are stored in Supabase Vault; toggle per-agent which servers it has access to, and their tools land directly in the agent's tool list.",
+  },
+  {
+    q: "What's a skill?",
+    a: "A reusable instruction set — write one inline, or upload a markdown file with name/description frontmatter. Agents you opt in load the skill into their system prompt, so behaviors compound across agents and projects.",
+  },
+  {
+    q: "How do I deploy an agent?",
+    a: "Click publish. You get a /a/<slug> URL, a ready-to-paste iframe snippet, and a public POST endpoint — all CORS-enabled so you can call it from your own backend or frontend. Unpublish any time.",
   },
   {
     q: "Which models does it support?",
-    a: "Anthropic, OpenAI, and local models. Agents are model-agnostic; you pick per agent.",
+    a: "Bring your own API key for Anthropic or OpenAI in settings. Every agent uses that credential — no bundled inference, no markup.",
+  },
+];
+
+const useCases = [
+  {
+    title: "Internal knowledge desk",
+    body: "Upload PDFs and specs, plug the agent into your Slack or Linear MCP, and drop an iframe into your intranet. Answers come from the source, cited by name.",
+    meta: ["PDF · Doc", "External MCP", "iframe embed"],
   },
   {
-    q: "Is it self-hostable?",
-    a: "Yes. Bring your own Postgres and object storage, run the stack in Docker, point Persona at it.",
+    title: "Data analyst",
+    body: "Attach CSVs. The built-in csv_query tool filters, projects, and cites rows — no embedding pipeline, no stale retriever, just structured answers.",
+    meta: ["CSV · Graph", "csv_query", "public API"],
   },
   {
-    q: "Who is it for?",
-    a: "Teams whose knowledge lives in too many places — product, support, ops, research.",
+    title: "Ops copilot",
+    body: "Connect GitHub or Linear via a custom MCP server, add a skill like “write PR summaries”, and ship the agent to the team as a single URL.",
+    meta: ["MCP · HTTP / SSE", "Skills", "publish → share"],
   },
 ];
 
 /* ——————————————————————————————————————————————————————————————
  * PRIMITIVES
+ * ——
+ * Every section is a `Cell`: a full-viewport-width band (so the horizontal
+ * divider bleeds edge-to-edge) with a centered inner rail column that carries
+ * the vertical borders and holds the content. The horizontal lines span the
+ * page; the content stays inside the rails.
  * —————————————————————————————————————————————————————————————— */
 
-function Plus({ className }) {
-  /* signature "+" corner marker — diagram / terminal-UI feel */
+function Cell({ children, className, innerClassName, as = "section", id }) {
+  const Tag = as;
+  return (
+    <Tag
+      id={id}
+      className={cn("border-b border-foreground/20 bg-background", className)}
+    >
+      <div
+        className={cn(
+          "mx-auto w-full max-w-[1320px] border-x border-foreground/20",
+          innerClassName
+        )}
+      >
+        {children}
+      </div>
+    </Tag>
+  );
+}
+
+function Pill({ tone = "default", children }) {
   return (
     <span
-      aria-hidden
       className={cn(
-        "pointer-events-none absolute font-mono text-[14px] leading-none text-primary/60 select-none",
-        className
+        "inline-flex items-center gap-2 border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.24em]",
+        tone === "accent"
+          ? "border-primary/50 bg-primary/10 text-primary"
+          : "border-foreground/20 bg-transparent text-muted-foreground"
       )}
     >
-      +
-    </span>
-  );
-}
-
-function Frame({ className, children, plus = true }) {
-  /* boxy section container with optional plus markers at the corners */
-  return (
-    <div className={cn("relative", className)}>
-      {plus && (
-        <>
-          <Plus className="-left-[6px] -top-[6px]" />
-          <Plus className="-right-[6px] -top-[6px]" />
-          <Plus className="-left-[6px] -bottom-[6px]" />
-          <Plus className="-right-[6px] -bottom-[6px]" />
-        </>
-      )}
-      {children}
-    </div>
-  );
-}
-
-function Eyebrow({ children }) {
-  return (
-    <span className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-      <span className="h-px w-8 bg-primary/60" />
       {children}
     </span>
   );
 }
 
-/* — custom, reliable marquee — */
-function LogoRail({ items }) {
-  const all = [...items, ...items, ...items];
+function MonoButton({ href, children, variant = "ghost", external = false }) {
+  const base =
+    "inline-flex h-10 items-center gap-2 border px-4 font-mono text-[11.5px] uppercase tracking-[0.2em] transition-colors";
+  const styles =
+    variant === "solid"
+      ? "border-foreground/85 bg-foreground text-background hover:bg-foreground/90"
+      : "border-foreground/25 bg-transparent text-foreground hover:border-foreground/60 hover:bg-transparent";
+  const Comp = external ? "a" : Link;
+  const extProps = external ? { target: "_blank", rel: "noreferrer" } : {};
   return (
-    <div className="marquee-pause relative overflow-hidden">
-      <div
-        className="flex w-max animate-slide-left items-center gap-16 py-1"
-        style={{ ["--duration"]: "32s" }}
-      >
-        {all.map(({ name, Mark }, i) => (
-          <div
-            key={`${name}-${i}`}
-            className="flex shrink-0 items-center gap-3 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Mark className="h-5 w-5" />
-            <span className="text-[15px] tracking-tight">{name}</span>
-          </div>
-        ))}
-      </div>
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background to-transparent" />
-    </div>
+    <Comp href={href} className={cn(base, styles)} {...extProps}>
+      {children}
+    </Comp>
   );
 }
 
 /* ——————————————————————————————————————————————————————————————
- * HEADER
+ * TOP BAR
  * —————————————————————————————————————————————————————————————— */
 
-function Header() {
-  const navLinks = [
-    { href: "#primitives", label: "Primitives" },
-    { href: "#workflow", label: "Workflow" },
-    { href: "#faq", label: "FAQ" },
-  ];
-
-  const btn =
-    "inline-flex h-9 items-center justify-center rounded-none px-4 text-[12px] font-medium tracking-tight transition-colors";
-
+function TopBar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6 sm:px-8">
-        {/* logo */}
+    <Cell className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl">
+      <div className="flex h-14 items-center justify-between px-6 sm:px-10">
         <Link href="/" className="flex items-baseline tracking-tight">
-          <span className="text-[16px] font-medium">persona</span>
-          <span className="cursor-blink ml-0.5 font-mono text-[18px] leading-none text-primary">_</span>
+          <span className="text-[15px] font-medium">persona</span>
+          <span className="cursor-blink ml-0.5 font-mono text-[18px] leading-none text-primary">
+            _
+          </span>
         </Link>
 
-        {/* middle nav */}
-        <nav className="hidden items-center md:flex">
-          {navLinks.map((l, i) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className={cn(
-                "flex h-9 items-center border-y border-r border-border/60 px-4 text-[12px] tracking-tight text-muted-foreground transition-colors hover:text-foreground hover:bg-card/60",
-                i === 0 && "border-l"
-              )}
-            >
-              {l.label}
-            </a>
-          ))}
-        </nav>
-
-        {/* right actions */}
-        <div className="flex items-center">
-          <a
-            href="https://github.com/KushalPraja/persona"
-            target="_blank"
-            rel="noreferrer"
-            className={cn(
-              btn,
-              "border border-border/60 text-muted-foreground hover:border-border hover:bg-card/60 hover:text-foreground"
-            )}
-          >
-            GitHub
-          </a>
+        <div className="flex items-center gap-2">
           <Link
             href="/signin"
-            className={cn(
-              btn,
-              "-ml-px border border-primary/70 bg-primary text-primary-foreground hover:bg-primary/90"
-            )}
+            className="inline-flex h-9 items-center border border-foreground/80 bg-foreground px-3.5 font-mono text-[10.5px] uppercase tracking-[0.22em] text-background transition-colors hover:bg-foreground/90"
           >
             Sign in
           </Link>
         </div>
       </div>
-    </header>
+    </Cell>
+  );
+}
+
+function Announcement() {
+  return (
+    <Cell className="border-b border-foreground/15 bg-primary/20">
+      <a
+        href="#anatomy"
+        className="group flex items-center justify-center gap-2.5 px-6 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-foreground/80 transition-colors hover:text-foreground"
+      >
+        <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+        <span className="font-medium">Launch</span>
+        <span className="h-3 w-px bg-foreground/20" />
+        <span>Project data sources and first-party MCP</span>
+        <span className="text-primary transition-transform group-hover:translate-x-0.5">
+          →
+        </span>
+      </a>
+    </Cell>
   );
 }
 
 /* ——————————————————————————————————————————————————————————————
- * HERO
+ * HERO CELL — scroll-driven chat demo occupies the hero; left rail carries
+ * headline, copy, stats, CTAs. Uses the HeroChat component (260vh tall with
+ * its own internal sticky stage).
  * —————————————————————————————————————————————————————————————— */
 
-function Hero() {
+function HeroCell() {
   return (
-    <HeroChat
-      title={
-        <>
-          <h1 className="text-[2.75rem] font-medium leading-[1.02] tracking-[-0.03em] text-foreground sm:text-[3.5rem] md:text-[4.25rem]">
-            A knowledge graph
-            <br />
-            for software{" "}
-            <span className="text-primary">that remembers</span>.
-          </h1>
+    <Cell>
+      <HeroChat
+        title={
+          <div className="relative">
+            <Reveal delay={60}>
+              <h1 className="text-[2.75rem] font-medium leading-[0.96] tracking-[-0.035em] sm:text-[3.5rem] md:text-[4.25rem]">
+                Ship AI agents
+                <br />
+                that{" "}
+                <span className="italic text-primary">know your stuff</span>.
+              </h1>
+            </Reveal>
 
-          <p className="mt-6 max-w-md text-[15.5px] leading-relaxed text-muted-foreground">
-            Model your domain as typed nodes. Deploy agents that read from
-            them — with provenance, by default. No chunks, no guessing.
-          </p>
-        </>
-      }
-    />
-  );
-}
+            <Reveal delay={140}>
+              <p className="mt-6 max-w-[460px] text-[15px] leading-[1.65] text-muted-foreground">
+                Ground an agent in your docs, PDFs, CSVs or graphs. Extend it
+                with any MCP server. Layer on reusable skills. Publish in one
+                click as a URL, an iframe, or a JSON API.
+              </p>
+            </Reveal>
 
-/* ——————————————————————————————————————————————————————————————
- * INTEGRATIONS MARQUEE
- * —————————————————————————————————————————————————————————————— */
-
-function Integrations() {
-  return (
-    <section className="border-y border-border/60 bg-card/30">
-      <div className="mx-auto max-w-6xl px-6 py-10 sm:px-8">
-        <div className="mb-5 flex items-center justify-between">
-          <Eyebrow>[ 00 ] / integrations</Eyebrow>
-          <span className="hidden font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground sm:inline">
-            <span className="text-primary">+</span> many more
-          </span>
-        </div>
-        <LogoRail items={integrations} />
-      </div>
-    </section>
-  );
-}
-
-/* ——————————————————————————————————————————————————————————————
- * FEATURES — boxy shared-border grid
- * —————————————————————————————————————————————————————————————— */
-
-function Features() {
-  return (
-    <section id="primitives" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-16 sm:px-8">
-      <Reveal>
-        <div className="mb-8 flex items-end justify-between gap-6">
-          <div>
-            <Eyebrow>[ 01 ] / primitives</Eyebrow>
-            <h2 className="mt-3 max-w-xl text-2xl font-medium leading-[1.1] tracking-[-0.02em] sm:text-[28px]">
-              The building blocks.
-            </h2>
-          </div>
-          <p className="hidden max-w-xs text-[12.5px] leading-relaxed text-muted-foreground sm:block">
-            Six primitives that define how Persona thinks about knowledge —
-            each first-class, none optional.
-          </p>
-        </div>
-      </Reveal>
-
-      <Frame>
-        <div className="grid grid-cols-1 gap-px overflow-hidden border border-border/70 bg-border/70 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map(({ tag, title, body, Art }, i) => (
-            <Reveal
-              key={title}
-              delay={i * 90}
-              as="article"
-              className="group relative bg-card/40 backdrop-blur-sm transition-colors hover:bg-card/80"
-            >
-              {/* illustration cell */}
-              <div className="relative flex h-24 items-center justify-center border-b border-border/60 bg-background/40 text-foreground/60 transition-colors group-hover:text-foreground/85">
-                <Art className="h-14" />
-                <span className="absolute left-3 top-3 font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground">
-                  {String(i + 1).padStart(2, "0")} · {tag}
-                </span>
-              </div>
-              {/* copy */}
-              <div className="px-5 py-4">
-                <h3 className="text-[13px] font-medium tracking-tight">
-                  {title}
-                </h3>
-                <p className="mt-1.5 text-[12px] leading-[1.6] text-muted-foreground">
-                  {body}
-                </p>
+            <Reveal delay={200}>
+              <div className="mt-8 flex flex-wrap items-center gap-px">
+                <MonoButton href="/signin" variant="solid">
+                  Start free
+                </MonoButton>
               </div>
             </Reveal>
-          ))}
-        </div>
-      </Frame>
-    </section>
-  );
-}
-
-/* ——————————————————————————————————————————————————————————————
- * HOW IT WORKS
- * —————————————————————————————————————————————————————————————— */
-
-function HowItWorks() {
-  return (
-    <section id="workflow" className="scroll-mt-20 border-y border-border/60 bg-card">
-      <div className="mx-auto max-w-6xl px-6 py-20 sm:px-8">
-        <Reveal className="mb-10 flex items-end justify-between gap-6">
-          <div>
-            <Eyebrow>[ 02 ] / workflow</Eyebrow>
-            <h2 className="mt-3 text-3xl font-medium leading-[1.1] tracking-[-0.02em] sm:text-4xl">
-              How it works.
-            </h2>
           </div>
-          <p className="hidden max-w-xs text-sm leading-relaxed text-muted-foreground sm:block">
-            Three steps, no CLI required.
-          </p>
-        </Reveal>
-
-        <Frame>
-          <ol className="grid grid-cols-1 gap-px overflow-hidden border border-border/70 bg-border/70 md:grid-cols-3">
-            {steps.map((s, i) => (
-              <Reveal
-                key={s.n}
-                as="li"
-                delay={i * 120}
-                className="relative bg-card/50 p-8"
-              >
-                <div className="flex items-baseline justify-between">
-                  <span className="font-mono text-5xl tracking-tight text-primary/90">
-                    {s.n}
-                  </span>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                    step {i + 1}/3
-                  </span>
-                </div>
-                <h3 className="mt-6 text-[17px] font-medium tracking-tight">
-                  {s.title}
-                </h3>
-                <p className="mt-2 text-[14px] leading-[1.65] text-muted-foreground">
-                  {s.body}
-                </p>
-              </Reveal>
-            ))}
-          </ol>
-        </Frame>
-      </div>
-    </section>
+        }
+      />
+    </Cell>
   );
 }
 
 /* ——————————————————————————————————————————————————————————————
- * FAQ
+ * STATS ROW
  * —————————————————————————————————————————————————————————————— */
 
-function FAQ() {
+function StatsCell() {
   return (
-    <section id="faq" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-20 sm:px-8">
-      <Reveal className="mb-10">
-        <Eyebrow>[ 03 ] / questions</Eyebrow>
-        <h2 className="mt-3 text-3xl font-medium leading-[1.1] tracking-[-0.02em] sm:text-4xl">
-          Frequently asked.
-        </h2>
-      </Reveal>
-
-      <Reveal delay={100}>
-        <Frame>
-          <Accordion
-            type="single"
-            collapsible
-            className="overflow-hidden border border-border/70 bg-card/30"
+    <Cell>
+      <div className="grid grid-cols-1 divide-y divide-foreground/20 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        {stats.map((s, i) => (
+          <div
+            key={s.unit}
+            className="flex items-baseline gap-4 px-6 py-6 sm:px-8"
           >
-            {faqs.map((item, i) => (
-              <AccordionItem
-                key={i}
-                value={`q-${i}`}
-                className="border-b border-border/70 last:border-b-0"
-              >
-                <AccordionTrigger className="px-6 py-5 text-left text-[15px] font-medium tracking-tight hover:no-underline [&>svg]:text-muted-foreground">
-                  <span className="flex items-baseline gap-4">
-                    <span className="font-mono text-[11px] text-muted-foreground">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span>{item.q}</span>
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="px-6 pb-5 pl-[4.25rem] text-[14px] leading-[1.7] text-muted-foreground">
-                  {item.a}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </Frame>
-      </Reveal>
-    </section>
-  );
-}
-
-/* ——————————————————————————————————————————————————————————————
- * CTA
- * —————————————————————————————————————————————————————————————— */
-
-function CTA() {
-  return (
-    <section className="mx-auto max-w-6xl px-6 pb-24 sm:px-8">
-      <Reveal className="mb-10">
-        <Eyebrow>[ 04 ] / start</Eyebrow>
-        <h2 className="mt-3 text-3xl font-medium leading-[1.1] tracking-[-0.02em] sm:text-4xl">
-          Ready when you are.
-        </h2>
-      </Reveal>
-
-      <Reveal delay={100}>
-        <Frame>
-          <div className="amber-wash relative overflow-hidden border border-border/70 bg-card/30">
             <div
-              className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
-              aria-hidden
-            />
-            <div
-              className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
-              aria-hidden
-            />
-            <div className="grid-bg absolute inset-0 opacity-60" aria-hidden />
-            <div className="relative flex flex-col items-start justify-between gap-8 px-8 py-16 sm:flex-row sm:items-center sm:px-12">
-              <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-                Sign in, start with a blank canvas, or import what
-                you already have. No signup ceremony.
-              </p>
-              <div className="flex shrink-0 items-center">
-                <Link
-                  href="/signin"
-                  className="inline-flex h-10 items-center justify-center rounded-none border border-primary/70 bg-primary px-5 text-[13px] font-medium tracking-tight text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  Sign in
-                </Link>
-                <a
-                  href="https://github.com/KushalPraja/persona"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="-ml-px inline-flex h-10 items-center justify-center rounded-none border border-border/70 bg-card/40 px-5 text-[13px] font-medium tracking-tight text-muted-foreground transition-colors hover:border-border hover:bg-card/80 hover:text-foreground"
-                >
-                  GitHub
-                </a>
+              className={cn(
+                "font-sans text-[34px] font-medium leading-none tracking-[-0.04em]",
+                i === 1 && "text-primary"
+              )}
+            >
+              {s.value}
+            </div>
+            <div>
+              <div className="text-[13px] font-medium tracking-tight">
+                {s.unit}
+              </div>
+              <div className="mt-0.5 font-mono text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">
+                {s.note}
               </div>
             </div>
           </div>
-        </Frame>
-      </Reveal>
-    </section>
+        ))}
+      </div>
+    </Cell>
   );
 }
 
 /* ——————————————————————————————————————————————————————————————
- * FOOTER
+ * ACCORDION CELL — FAQ with sticky side label
  * —————————————————————————————————————————————————————————————— */
 
-function Footer() {
+function AccordionCell() {
   return (
-    <footer className="relative overflow-hidden border-t border-border/60">
-      <div
-        className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
-        aria-hidden
-      />
-      <div className="grid-bg absolute inset-0 opacity-60" aria-hidden />
-
-      <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-6 sm:px-8">
-        {/* meta row above the big wordmark */}
-        <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-          <span className="h-px w-8 bg-primary/60" />
-          <span>© {new Date().getFullYear()} persona</span>
+    <Cell id="faq">
+      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr]">
+        <div className="border-b border-foreground/20 bg-background/40 p-6 md:border-b-0 md:border-r md:p-10">
+          <div className="sticky top-24">
+            <h2 className="text-[22px] font-medium leading-[1.1] tracking-[-0.02em]">
+              Asked and
+              <br />
+              answered.
+            </h2>
+            <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground">
+              If we haven&apos;t covered it, open an issue.
+            </p>
+          </div>
         </div>
+        <Accordion type="single" collapsible defaultValue="q-0">
+          {faqs.map((item, i) => (
+            <AccordionItem
+              key={i}
+              value={`q-${i}`}
+              className="border-b border-foreground/20 last:border-b-0"
+            >
+              <AccordionTrigger
+                className={cn(
+                  "group flex w-full items-center justify-between px-6 py-5 text-left text-[15px] font-medium tracking-tight hover:no-underline md:px-10",
+                  "[&>svg]:hidden"
+                )}
+              >
+                <span className="flex items-baseline gap-4">
+                  <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="tracking-[-0.015em]">{item.q}</span>
+                </span>
+                <span
+                  aria-hidden
+                  className="ml-4 font-mono text-[13px] text-primary transition-transform duration-300 group-data-[state=open]:rotate-180"
+                >
+                  ∨
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6 pl-[4.75rem] pr-10 text-[13.5px] leading-[1.75] text-muted-foreground md:px-10 md:pl-[5.5rem]">
+                {item.a}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    </Cell>
+  );
+}
 
-        {/* giant trendy wordmark */}
+/* ——————————————————————————————————————————————————————————————
+ * CHART CELL
+ * —————————————————————————————————————————————————————————————— */
+
+function AnatomyCell() {
+  return (
+    <Cell id="anatomy">
+      <AgentAnatomy />
+    </Cell>
+  );
+}
+
+/* ——————————————————————————————————————————————————————————————
+ * CTA CELL — dashed circle + headline
+ * —————————————————————————————————————————————————————————————— */
+
+function CtaCell() {
+  return (
+    <Cell className="tinted-amber">
+      <div className="grid grid-cols-1 items-center gap-10 px-6 py-16 sm:px-10 md:grid-cols-[360px_1fr] md:gap-16 md:py-20">
+        <div className="flex items-center justify-center md:justify-start">
+          <DashedCircle value="6" label="first-class primitives" />
+        </div>
+        <div className="max-w-xl">
+          <h2 className="text-[2rem] font-medium leading-[1.06] tracking-[-0.025em] sm:text-[2.5rem]">
+            Six primitives. One workspace. Shippable agents.
+          </h2>
+          <p className="mt-4 max-w-md text-[14px] leading-[1.7] text-muted-foreground">
+            Projects, data sources, agents, MCP integrations, skills, and a
+            one-click publish that hands you a URL, an iframe, and a JSON API.
+            Bring your own model key and you&apos;re live.
+          </p>
+          <div className="mt-8">
+            <MonoButton href="/signin" variant="solid">
+              Get started
+            </MonoButton>
+          </div>
+        </div>
+      </div>
+    </Cell>
+  );
+}
+
+/* ——————————————————————————————————————————————————————————————
+ * USE CASES
+ * —————————————————————————————————————————————————————————————— */
+
+function UseCasesCell() {
+  return (
+    <>
+      <Cell id="cases">
+        <div className="px-6 py-10 sm:px-10">
+          <h2 className="text-[2rem] font-medium leading-[1.06] tracking-[-0.025em] sm:text-[2.5rem]">
+            An agent for every job that deserves one.
+          </h2>
+          <p className="mt-3 max-w-lg text-[13.5px] leading-relaxed text-muted-foreground">
+            Three shapes we see teams ship first. Start with one; the same
+            primitives cover the rest.
+          </p>
+        </div>
+      </Cell>
+      <Cell>
+        <div className="grid grid-cols-1 divide-y divide-foreground/20 md:grid-cols-3 md:divide-x md:divide-y-0">
+          {useCases.map((uc, i) => (
+            <article
+              key={uc.title}
+              className="group relative flex flex-col gap-5 px-6 py-8 transition-colors hover:bg-primary/5 sm:px-8"
+            >
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden
+                  className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground"
+                >
+                  0{i + 1}
+                </span>
+                <span className="h-px flex-1 bg-foreground/15" />
+              </div>
+              <h3 className="text-[17px] font-medium tracking-[-0.015em]">
+                {uc.title}
+              </h3>
+              <p className="text-[13px] leading-[1.7] text-muted-foreground">
+                {uc.body}
+              </p>
+              <div className="mt-auto flex flex-wrap gap-2 pt-2">
+                {uc.meta.map((m, j) => (
+                  <span
+                    key={m}
+                    className="inline-flex items-center gap-1.5 border border-foreground/20 bg-background/60 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+                  >
+                    <span
+                      className={cn(
+                        "h-1 w-1 rounded-full",
+                        j === 0
+                          ? "bg-primary/80"
+                          : "bg-primary/60"
+                      )}
+                    />
+                    {m}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </Cell>
+    </>
+  );
+}
+
+/* ——————————————————————————————————————————————————————————————
+ * INTEGRATIONS RAIL
+ * —————————————————————————————————————————————————————————————— */
+
+function IntegrationsCell() {
+  const trailing = [...integrations, ...integrations, ...integrations];
+  return (
+    <Cell>
+      <div className="px-6 pt-12 sm:px-10 sm:pt-16">
+        <h2 className="text-[2rem] font-medium leading-[1.06] tracking-[-0.025em] sm:text-[2.5rem]">
+          Any MCP server plugs straight in.
+        </h2>
+        <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-muted-foreground">
+          Bring the tools you already use. Drop in a streamable-HTTP or SSE
+          endpoint, store the token in vault, and toggle which agents get
+          access.
+        </p>
+      </div>
+      <div className="marquee-pause relative overflow-hidden">
+        <div
+          className="flex w-max animate-slide-left items-center gap-14 py-10"
+          style={{ ["--duration"]: "40s" }}
+        >
+          {trailing.map(({ name, Mark }, i) => (
+            <div
+              key={`${name}-${i}`}
+              className="flex shrink-0 items-center gap-2.5 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Mark className="h-4 w-4" />
+              <span className="font-mono text-[11.5px] uppercase tracking-[0.18em]">
+                {name}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/80 to-transparent" />
+      </div>
+    </Cell>
+  );
+}
+
+/* ——————————————————————————————————————————————————————————————
+ * FOOTER — thin meta row + giant wordmark
+ * —————————————————————————————————————————————————————————————— */
+
+function FooterMeta() {
+  return (
+    <Cell>
+      <div className="flex flex-col items-start justify-between gap-4 px-6 py-5 sm:flex-row sm:items-center sm:px-10">
+        <Link href="/" className="flex items-baseline tracking-tight">
+          <span className="text-[14px] font-medium">persona</span>
+          <span className="cursor-blink ml-0.5 font-mono text-[16px] leading-none text-primary">
+            _
+          </span>
+        </Link>
+        <div className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-muted-foreground">
+          © {new Date().getFullYear()} persona · mit license
+        </div>
+      </div>
+    </Cell>
+  );
+}
+
+function FooterWordmark() {
+  return (
+    <Cell as="footer" className="relative overflow-hidden">
+      <div className="relative px-6 pb-8 pt-14 sm:px-10">
         <div
           aria-hidden
-          className="relative mt-8 flex items-baseline leading-[0.82] tracking-[-0.06em] text-foreground"
+          className="grid-bg pointer-events-none absolute inset-0 opacity-50"
+        />
+        <div
+          aria-hidden
+          className="amber-wash pointer-events-none absolute inset-0 opacity-80"
+        />
+        <div
+          aria-hidden
+          className="relative flex items-baseline leading-[0.82] tracking-[-0.06em] text-foreground"
         >
           <span className="select-none font-medium text-[clamp(4rem,22vw,17rem)]">
             persona
@@ -533,7 +526,7 @@ function Footer() {
           </span>
         </div>
       </div>
-    </footer>
+    </Cell>
   );
 }
 
@@ -544,16 +537,17 @@ function Footer() {
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header />
-      <main>
-        <Hero />
-        <Integrations />
-        <Features />
-        <HowItWorks />
-        <FAQ />
-        <CTA />
-      </main>
-      <Footer />
+      <Announcement />
+      <TopBar />
+      <HeroCell />
+      <StatsCell />
+      <AccordionCell />
+      <AnatomyCell />
+      <CtaCell />
+      <UseCasesCell />
+      <IntegrationsCell />
+      <FooterMeta />
+      <FooterWordmark />
     </div>
   );
 }

@@ -8,10 +8,9 @@ export async function POST(
   const ctx = await requireUser();
   if (isAuthResponse(ctx)) return ctx;
   const { supabase, user } = ctx;
-  const { id: agentId } = await params;
+  const { id: dataSourceId } = await params;
 
   const body = await req.json().catch(() => ({}));
-  // allow client-supplied id so React Flow + DB stay in sync from the optimistic insert
   const id = typeof body?.id === "string" ? body.id : undefined;
   const type = typeof body?.type === "string" ? body.type : "knowledge";
   const position_x = Number(body?.position_x ?? body?.position?.x ?? 0);
@@ -19,10 +18,10 @@ export async function POST(
   const data = body?.data && typeof body.data === "object" ? body.data : {};
 
   const { data: row, error } = await supabase
-    .from("agent_nodes")
+    .from("data_source_nodes")
     .insert({
       ...(id ? { id } : {}),
-      agent_id: agentId,
+      data_source_id: dataSourceId,
       user_id: user.id,
       type,
       position_x,

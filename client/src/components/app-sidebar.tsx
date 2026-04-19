@@ -19,6 +19,8 @@ import { supabase } from "@/lib/supabase";
 
 const nav = [
   { title: "Projects", url: "/home" },
+  { title: "Skills", url: "/skills" },
+  { title: "Usage", url: "/usage" },
   { title: "Settings", url: "/settings" },
 ];
 
@@ -35,12 +37,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r border-border/60">
-      <SidebarHeader className="border-b border-border/60 p-0">
+      <SidebarHeader className="h-16 shrink-0 justify-center border-b border-border/60 p-0">
         <Link
           href="/"
-          className="flex items-baseline gap-0 px-5 py-5 tracking-tight transition-colors hover:bg-card/60"
+          className="flex h-full items-center gap-0 px-5 tracking-tight transition-colors hover:bg-card/60"
         >
-          <span className="text-[18px] font-medium text-sidebar-foreground">
+          <span className="text-[18px] font-medium leading-none text-sidebar-foreground">
             persona
           </span>
           <span className="cursor-blink ml-0.5 font-mono text-[20px] leading-none text-primary">

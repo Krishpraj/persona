@@ -16,6 +16,7 @@ type IntegrationRow = {
   config: Record<string, unknown>;
   secret_preview: string;
   is_active: boolean;
+  project_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -29,6 +30,7 @@ function enrich(row: IntegrationRow) {
           id: template.id,
           name: template.name,
           description: template.description,
+          kind: template.kind,
           transport: template.transport,
         }
       : null,
@@ -42,7 +44,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("mcp_integrations")
     .select(
-      "id, template_id, label, config, secret_preview, is_active, created_at, updated_at"
+      "id, template_id, label, config, secret_preview, is_active, project_id, created_at, updated_at"
     )
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -52,6 +54,7 @@ export async function GET() {
       id: t.id,
       name: t.name,
       description: t.description,
+      kind: t.kind,
       transport: t.transport,
       configSchema: t.configSchema,
     })),
@@ -104,7 +107,7 @@ export async function POST(req: Request) {
       is_active: true,
     })
     .select(
-      "id, template_id, label, config, secret_preview, is_active, created_at, updated_at"
+      "id, template_id, label, config, secret_preview, is_active, project_id, created_at, updated_at"
     )
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

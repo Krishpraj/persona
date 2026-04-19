@@ -8,7 +8,7 @@ export async function POST(
   const ctx = await requireUser();
   if (isAuthResponse(ctx)) return ctx;
   const { supabase, user } = ctx;
-  const { id: agentId } = await params;
+  const { id: dataSourceId } = await params;
 
   const body = await req.json().catch(() => ({}));
   const id = typeof body?.id === "string" ? body.id : undefined;
@@ -21,10 +21,10 @@ export async function POST(
     );
 
   const { data, error } = await supabase
-    .from("agent_edges")
+    .from("data_source_edges")
     .insert({
       ...(id ? { id } : {}),
-      agent_id: agentId,
+      data_source_id: dataSourceId,
       user_id: user.id,
       source_node_id,
       target_node_id,

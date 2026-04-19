@@ -112,6 +112,10 @@ function useBreadcrumbCrumbs(pathname: string): Crumb[] {
 
     if (root === "settings") return [home, { label: "Settings" }];
 
+    if (root === "usage") return [home, { label: "Usage" }];
+
+    if (root === "skills") return [home, { label: "Skills" }];
+
     if (root === "projects" && id) {
       const name = cache.projects[id] ?? "Project";
       return [home, { label: name }];
@@ -159,7 +163,7 @@ export default function ClientLayout({
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset>
-            <header className="h-16 px-4" />
+            <header className="h-16 shrink-0 border-b border-border/60 px-4" />
             <main className="flex flex-1 flex-col gap-4 p-4">{children}</main>
           </SidebarInset>
         </SidebarProvider>
@@ -172,7 +176,7 @@ export default function ClientLayout({
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border/60 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>

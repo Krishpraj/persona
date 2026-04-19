@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { createAnonClient } from "@/lib/supabase-server";
+import { PUBLIC_CORS_HEADERS, corsPreflight } from "@/lib/cors";
+
+export function OPTIONS() {
+  return corsPreflight();
+}
 
 export async function GET(
   _req: Request,
@@ -10,37 +15,38 @@ export async function GET(
 
   const { data: agent, error } = await sb
     .from("agents")
-    .select("id, name, role, description, public_slug, is_published")
+    .select("id, project_id, name, role, description, public_slug, is_published")
     .eq("public_slug", slug)
     .eq("is_published", true)
     .maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!agent) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (error)
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500, headers: PUBLIC_CORS_HEADERS }
+    );
+  if (!agent)
+    return NextResponse.json(
+      { error: "Not found" },
+      { status: 404, headers: PUBLIC_CORS_HEADERS }
+    );
 
-  const [nodesRes, edgesRes] = await Promise.all([
-    sb
-      .from("agent_nodes")
-      .select("id, type, position_x, position_y, data")
-      .eq("agent_id", agent.id),
-    sb
-      .from("agent_edges")
-      .select("id, source_node_id, target_node_id, label")
-      .eq("agent_id", agent.id),
-  ]);
-  if (nodesRes.error)
-    return NextResponse.json({ error: nodesRes.error.message }, { status: 500 });
-  if (edgesRes.error)
-    return NextResponse.json({ error: edgesRes.error.message }, { status: 500 });
+  const { data: sources } = await sb
+    .from("data_sources")
+    .select("id, kind, name, position")
+    .eq("project_id", agent.project_id)
+    .order("position", { ascending: true });
 
-  return NextResponse.json({
-    agent: {
-      id: agent.id,
-      name: agent.name,
-      role: agent.role,
-      description: agent.description,
-      public_slug: agent.public_slug,
+  return NextResponse.json(
+    {
+      agent: {
+        id: agent.id,
+        name: agent.name,
+        role: agent.role,
+        description: agent.description,
+        public_slug: agent.public_slug,
+      },
+      dataSources: sources ?? [],
     },
-    nodes: nodesRes.data,
-    edges: edgesRes.data,
-  });
+    { headers: PUBLIC_CORS_HEADERS }
+  );
 }
