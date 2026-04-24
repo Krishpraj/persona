@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   Accordion,
@@ -5,8 +7,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Reveal } from "@/components/Reveal";
-import { HeroChat } from "@/components/HeroChat";
+import { HeroArt } from "@/components/landing/HeroArt";
+import { AsciiField } from "@/components/landing/AsciiField";
+import { Flow } from "@/components/landing/Flow";
 import {
   MarkNotion,
   MarkAnthropic,
@@ -19,6 +22,7 @@ import {
 } from "@/components/landing-art";
 import { DashedCircle } from "@/components/landing/DashedCircle";
 import { AgentAnatomy } from "@/components/landing/AgentAnatomy";
+import { useSmoothScroll } from "@/lib/smooth-scroll";
 import { cn } from "@/lib/utils";
 
 /* ——————————————————————————————————————————————————————————————
@@ -153,10 +157,10 @@ function MonoButton({ href, children, variant = "ghost", external = false }) {
 function TopBar() {
   return (
     <Cell className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl">
-      <div className="flex h-14 items-center justify-between px-6 sm:px-10">
-        <Link href="/" className="flex items-baseline tracking-tight">
-          <span className="text-[15px] font-medium">persona</span>
-          <span className="cursor-blink ml-0.5 font-mono text-[18px] leading-none text-primary">
+      <div className="flex h-16 items-center justify-between px-6 sm:px-10">
+        <Link href="/" className="flex items-baseline tracking-tight transition-opacity hover:opacity-80">
+          <span className="text-[22px] font-medium leading-none">persona</span>
+          <span className="cursor-blink ml-0.5 font-mono text-[26px] leading-none text-primary">
             _
           </span>
         </Link>
@@ -164,9 +168,23 @@ function TopBar() {
         <div className="flex items-center gap-2">
           <Link
             href="/signin"
-            className="inline-flex h-9 items-center border border-foreground/80 bg-foreground px-3.5 font-mono text-[10.5px] uppercase tracking-[0.22em] text-background transition-colors hover:bg-foreground/90"
+            className="group/nav relative inline-flex h-9 items-center overflow-hidden border border-foreground/25 bg-transparent px-3.5 font-mono text-[10.5px] uppercase tracking-[0.22em] text-foreground transition-all duration-300 hover:-translate-y-[1px] hover:border-foreground/60 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
-            Sign in
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-18deg] bg-gradient-to-r from-transparent via-primary/15 to-transparent transition-transform duration-700 ease-out group-hover/nav:translate-x-full"
+            />
+            <span className="relative z-10">Sign in</span>
+          </Link>
+          <Link
+            href="/signin?mode=signup"
+            className="group/nav relative inline-flex h-9 items-center overflow-hidden border border-foreground/80 bg-foreground px-3.5 font-mono text-[10.5px] uppercase tracking-[0.22em] text-background transition-all duration-300 hover:-translate-y-[1px] hover:shadow-[0_8px_18px_-10px_oklch(0.215_0.015_245/0.6)] active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -translate-x-full skew-x-[-18deg] bg-gradient-to-r from-transparent via-background/20 to-transparent transition-transform duration-700 ease-out group-hover/nav:translate-x-full"
+            />
+            <span className="relative z-10">Sign up</span>
           </Link>
         </div>
       </div>
@@ -194,44 +212,14 @@ function Announcement() {
 }
 
 /* ——————————————————————————————————————————————————————————————
- * HERO CELL — scroll-driven chat demo occupies the hero; left rail carries
- * headline, copy, stats, CTAs. Uses the HeroChat component (260vh tall with
- * its own internal sticky stage).
+ * HERO CELL — interactive ASCII-art backdrop with headline + CTAs
+ * (rendered on an HTML canvas; reacts to pointer movement).
  * —————————————————————————————————————————————————————————————— */
 
 function HeroCell() {
   return (
     <Cell>
-      <HeroChat
-        title={
-          <div className="relative">
-            <Reveal delay={60}>
-              <h1 className="text-[2.75rem] font-medium leading-[0.96] tracking-[-0.035em] sm:text-[3.5rem] md:text-[4.25rem]">
-                Ship AI agents
-                <br />
-                that{" "}
-                <span className="italic text-primary">know your stuff</span>.
-              </h1>
-            </Reveal>
-
-            <Reveal delay={140}>
-              <p className="mt-6 max-w-[460px] text-[15px] leading-[1.65] text-muted-foreground">
-                Ground an agent in your docs, PDFs, CSVs or graphs. Extend it
-                with any MCP server. Layer on reusable skills. Publish in one
-                click as a URL, an iframe, or a JSON API.
-              </p>
-            </Reveal>
-
-            <Reveal delay={200}>
-              <div className="mt-8 flex flex-wrap items-center gap-px">
-                <MonoButton href="/signin" variant="solid">
-                  Start free
-                </MonoButton>
-              </div>
-            </Reveal>
-          </div>
-        }
-      />
+      <HeroArt />
     </Cell>
   );
 }
@@ -247,7 +235,7 @@ function StatsCell() {
         {stats.map((s, i) => (
           <div
             key={s.unit}
-            className="flex items-baseline gap-4 px-6 py-6 sm:px-8"
+            className="flex items-baseline gap-4 px-6 py-4 sm:px-8"
           >
             <div
               className={cn(
@@ -279,10 +267,10 @@ function StatsCell() {
 function AccordionCell() {
   return (
     <Cell id="faq">
-      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr]">
+      <div className="grid grid-cols-1 md:grid-cols-[320px_1fr]">
         <div className="border-b border-foreground/20 bg-background/40 p-6 md:border-b-0 md:border-r md:p-10">
           <div className="sticky top-24">
-            <h2 className="text-[22px] font-medium leading-[1.1] tracking-[-0.02em]">
+            <h2 className="font-display text-[2.35rem] font-normal leading-[1.02] tracking-[-0.015em] sm:text-[3rem]">
               Asked and
               <br />
               answered.
@@ -301,7 +289,7 @@ function AccordionCell() {
             >
               <AccordionTrigger
                 className={cn(
-                  "group flex w-full items-center justify-between px-6 py-5 text-left text-[15px] font-medium tracking-tight hover:no-underline md:px-10",
+                  "group flex w-full items-center justify-between px-6 py-4 text-left text-[15px] font-medium tracking-tight hover:no-underline md:px-10",
                   "[&>svg]:hidden"
                 )}
               >
@@ -342,37 +330,6 @@ function AnatomyCell() {
 }
 
 /* ——————————————————————————————————————————————————————————————
- * CTA CELL — dashed circle + headline
- * —————————————————————————————————————————————————————————————— */
-
-function CtaCell() {
-  return (
-    <Cell className="tinted-amber">
-      <div className="grid grid-cols-1 items-center gap-10 px-6 py-16 sm:px-10 md:grid-cols-[360px_1fr] md:gap-16 md:py-20">
-        <div className="flex items-center justify-center md:justify-start">
-          <DashedCircle value="6" label="first-class primitives" />
-        </div>
-        <div className="max-w-xl">
-          <h2 className="text-[2rem] font-medium leading-[1.06] tracking-[-0.025em] sm:text-[2.5rem]">
-            Six primitives. One workspace. Shippable agents.
-          </h2>
-          <p className="mt-4 max-w-md text-[14px] leading-[1.7] text-muted-foreground">
-            Projects, data sources, agents, MCP integrations, skills, and a
-            one-click publish that hands you a URL, an iframe, and a JSON API.
-            Bring your own model key and you&apos;re live.
-          </p>
-          <div className="mt-8">
-            <MonoButton href="/signin" variant="solid">
-              Get started
-            </MonoButton>
-          </div>
-        </div>
-      </div>
-    </Cell>
-  );
-}
-
-/* ——————————————————————————————————————————————————————————————
  * USE CASES
  * —————————————————————————————————————————————————————————————— */
 
@@ -380,8 +337,8 @@ function UseCasesCell() {
   return (
     <>
       <Cell id="cases">
-        <div className="px-6 py-10 sm:px-10">
-          <h2 className="text-[2rem] font-medium leading-[1.06] tracking-[-0.025em] sm:text-[2.5rem]">
+        <div className="px-6 py-8 sm:px-10">
+          <h2 className="font-display text-[2.35rem] font-normal leading-[1.02] tracking-[-0.015em] sm:text-[3rem]">
             An agent for every job that deserves one.
           </h2>
           <p className="mt-3 max-w-lg text-[13.5px] leading-relaxed text-muted-foreground">
@@ -395,7 +352,7 @@ function UseCasesCell() {
           {useCases.map((uc, i) => (
             <article
               key={uc.title}
-              className="group relative flex flex-col gap-5 px-6 py-8 transition-colors hover:bg-primary/5 sm:px-8"
+              className="group relative flex flex-col gap-4 px-6 py-6 transition-colors hover:bg-primary/5 sm:px-8"
             >
               <div className="flex items-center gap-3">
                 <span
@@ -446,8 +403,8 @@ function IntegrationsCell() {
   const trailing = [...integrations, ...integrations, ...integrations];
   return (
     <Cell>
-      <div className="px-6 pt-12 sm:px-10 sm:pt-16">
-        <h2 className="text-[2rem] font-medium leading-[1.06] tracking-[-0.025em] sm:text-[2.5rem]">
+      <div className="px-6 pt-8 sm:px-10 sm:pt-10">
+        <h2 className="font-display text-[2.35rem] font-normal leading-[1.02] tracking-[-0.015em] sm:text-[3rem]">
           Any MCP server plugs straight in.
         </h2>
         <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-muted-foreground">
@@ -456,25 +413,29 @@ function IntegrationsCell() {
           access.
         </p>
       </div>
-      <div className="marquee-pause relative overflow-hidden">
+      <div className="marquee-pause relative mt-12 overflow-hidden">
         <div
-          className="flex w-max animate-slide-left items-center gap-14 py-10"
-          style={{ ["--duration"]: "40s" }}
+          className="flex w-max animate-slide-left items-center py-10"
+          style={{ ["--duration"]: "55s" }}
         >
           {trailing.map(({ name, Mark }, i) => (
             <div
               key={`${name}-${i}`}
-              className="flex shrink-0 items-center gap-2.5 text-muted-foreground transition-colors hover:text-foreground"
+              className="group flex shrink-0 items-center gap-3 px-10 text-foreground/55 transition-colors duration-300 hover:text-foreground"
             >
-              <Mark className="h-4 w-4" />
-              <span className="font-mono text-[11.5px] uppercase tracking-[0.18em]">
+              <Mark className="h-6 w-6 shrink-0 transition-transform duration-300 group-hover:scale-110" />
+              <span className="text-[20px] font-medium tracking-[-0.02em] leading-none">
                 {name}
               </span>
+              <span
+                aria-hidden
+                className="ml-10 h-4 w-px bg-foreground/20"
+              />
             </div>
           ))}
         </div>
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-background via-background/80 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-background via-background/95 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-background via-background/95 to-transparent" />
       </div>
     </Cell>
   );
@@ -505,14 +466,24 @@ function FooterMeta() {
 function FooterWordmark() {
   return (
     <Cell as="footer" className="relative overflow-hidden">
-      <div className="relative px-6 pb-8 pt-14 sm:px-10">
+      <div className="relative overflow-hidden px-6 pb-8 pt-20 sm:px-10 sm:pt-24">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <AsciiField className="opacity-95" palette="spectrum" />
+        </div>
+        {/* blue ambient glow — top-left */}
         <div
           aria-hidden
-          className="grid-bg pointer-events-none absolute inset-0 opacity-50"
+          className="pointer-events-none absolute -left-[10%] -top-[20%] h-[80%] w-[70%] bg-[radial-gradient(ellipse_60%_50%_at_30%_30%,oklch(0.56_0.17_252/0.28),transparent_70%)]"
         />
+        {/* rose ambient glow — bottom-right */}
         <div
           aria-hidden
-          className="amber-wash pointer-events-none absolute inset-0 opacity-80"
+          className="pointer-events-none absolute -right-[10%] -bottom-[20%] h-[80%] w-[70%] bg-[radial-gradient(ellipse_60%_50%_at_70%_70%,oklch(0.6_0.22_28/0.28),transparent_70%)]"
+        />
+        {/* cream legibility vignette */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_62%_58%_at_50%_55%,oklch(0.925_0.010_82/0.95),oklch(0.925_0.010_82/0.72)_45%,oklch(0.925_0.010_82/0.22)_70%,transparent_90%)]"
         />
         <div
           aria-hidden
@@ -535,17 +506,17 @@ function FooterWordmark() {
  * —————————————————————————————————————————————————————————————— */
 
 export default function Landing() {
+  useSmoothScroll({ navOffset: 76 });
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Announcement />
       <TopBar />
       <HeroCell />
-      <StatsCell />
-      <AccordionCell />
-      <AnatomyCell />
-      <CtaCell />
-      <UseCasesCell />
+      <Cell id="flow">
+        <Flow />
+      </Cell>
       <IntegrationsCell />
+      <AccordionCell />
       <FooterMeta />
       <FooterWordmark />
     </div>

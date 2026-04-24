@@ -8,6 +8,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -129,6 +130,13 @@
   }
   html {
     color-scheme: light;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
   body {
     @apply bg-background text-foreground antialiased;
@@ -262,3 +270,256 @@
   50% { box-shadow: 0 0 0 5px oklch(0.805 0.028 18 / 0); }
 }
 .live-dot { animation: live-dot 2s ease-out infinite; }
+
+/* — hero engagement chips gentle float — */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-[float"] { animation: none !important; }
+}
+
+/* ————————————————————————————————————————————————————————————————
+ * Flow section — numbered chapters bound by a progress-filled rail.
+ * The track is faint ink, the progress rose. Height of progress is
+ * driven by `--rail-progress` (0..1) set from scroll position in JS.
+ * ———————————————————————————————————————————————————————————————— */
+
+.flow-rail-track {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    oklch(0.215 0.015 245 / 0.12) 8%,
+    oklch(0.215 0.015 245 / 0.12) 92%,
+    transparent 100%
+  );
+}
+
+.flow-rail-fill {
+  background: linear-gradient(
+    to bottom,
+    oklch(0.805 0.028 18 / 0) 0%,
+    oklch(0.805 0.028 18 / 0.9) 14%,
+    oklch(0.805 0.028 18 / 1) 50%,
+    oklch(0.805 0.028 18 / 0.9) 86%,
+    oklch(0.805 0.028 18 / 0) 100%
+  );
+  transform-origin: top;
+  transform: scaleY(var(--rail-progress, 0));
+  will-change: transform;
+  box-shadow: 0 0 14px oklch(0.805 0.028 18 / 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-rail-fill { transform: scaleY(1); }
+}
+
+/* Rail marker halo — pulses when its chapter is "active" (head of scroll) */
+.flow-marker-halo {
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  border: 1px solid oklch(0.805 0.028 18 / 0.5);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 400ms ease-out, transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.flow-marker[data-active="true"] .flow-marker-halo {
+  opacity: 1;
+  transform: scale(1);
+  animation: flow-marker-pulse 2.4s ease-out infinite;
+}
+@keyframes flow-marker-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.805 0.028 18 / 0.35); }
+  50%      { box-shadow: 0 0 0 10px oklch(0.805 0.028 18 / 0); }
+}
+/* Active circle — rose border + text, gentle lift */
+.flow-marker[data-active="true"] .flow-marker-circle {
+  border-color: oklch(0.805 0.028 18 / 0.85);
+  color: oklch(0.55 0.14 22);
+  transform: scale(1.05);
+  box-shadow:
+    0 0 0 4px oklch(0.805 0.028 18 / 0.08),
+    0 8px 22px -14px oklch(0.805 0.028 18 / 0.7);
+}
+@media (prefers-reduced-motion: reduce) {
+  .flow-marker[data-active="true"] .flow-marker-circle {
+    transform: none;
+  }
+}
+
+/* Reveal + stagger — fine-grained child reveal for the flow section */
+.reveal-stagger {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.75s cubic-bezier(0.22, 0.61, 0.36, 1) var(--stagger, 0ms),
+    transform 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) var(--stagger, 0ms);
+  will-change: opacity, transform;
+}
+.in-view .reveal-stagger {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-stagger { opacity: 1; transform: none; transition: none; }
+}
+
+/* Floating card tilt (publish collage) */
+@keyframes float-tilt-l {
+  0%, 100% { transform: rotate(-2.2deg) translateY(0); }
+  50%      { transform: rotate(-2.2deg) translateY(-5px); }
+}
+@keyframes float-tilt-r {
+  0%, 100% { transform: rotate(1.8deg) translateY(0); }
+  50%      { transform: rotate(1.8deg) translateY(-6px); }
+}
+@keyframes float-tilt-m {
+  0%, 100% { transform: rotate(-0.5deg) translateY(0); }
+  50%      { transform: rotate(-0.5deg) translateY(-4px); }
+}
+.tilt-l { animation: float-tilt-l 7.5s ease-in-out infinite; }
+.tilt-m { animation: float-tilt-m 8s   ease-in-out infinite 0.4s; }
+.tilt-r { animation: float-tilt-r 7s   ease-in-out infinite 0.8s; }
+@media (prefers-reduced-motion: reduce) {
+  .tilt-l, .tilt-m, .tilt-r { animation: none; }
+}
+
+/* SVG trace draw — fires when parent is .in-view */
+@keyframes trace-draw {
+  0%   { stroke-dashoffset: var(--trace-length, 240); }
+  100% { stroke-dashoffset: 0; }
+}
+.in-view .trace-line {
+  stroke-dasharray: var(--trace-length, 240);
+  stroke-dashoffset: var(--trace-length, 240);
+  animation: trace-draw 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation-delay: var(--trace-delay, 120ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .in-view .trace-line { animation: none; stroke-dashoffset: 0; }
+}
+
+/* Soft grain overlay — procedural noise for visual panels */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  mix-blend-mode: multiply;
+  opacity: 0.22;
+}
+
+/* Soft card drop — paper-like stacked shadow for layered mocks */
+.paper-drop {
+  box-shadow:
+    0 1px 0 oklch(0.215 0.015 245 / 0.04),
+    0 2px 4px oklch(0.215 0.015 245 / 0.06),
+    0 12px 28px -10px oklch(0.215 0.015 245 / 0.18),
+    0 28px 60px -24px oklch(0.215 0.015 245 / 0.22);
+}
+
+/* Orbit slow rotation for center constellation */
+@keyframes orbit-slow {
+  to { transform: rotate(360deg); }
+}
+.orbit-slow {
+  animation: orbit-slow 44s linear infinite;
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-slow { animation: none; }
+}
+
+/* Grain swatch classes for outcome tiles */
+.tint-rose {
+  background:
+    radial-gradient(ellipse 120% 80% at 0% 0%, oklch(0.805 0.028 18 / 0.32), transparent 60%),
+    radial-gradient(ellipse 100% 80% at 100% 100%, oklch(0.75 0.10 22 / 0.18), transparent 60%),
+    linear-gradient(140deg, oklch(0.955 0.008 82), oklch(0.935 0.012 78));
+}
+.tint-azure {
+  background:
+    radial-gradient(ellipse 120% 80% at 100% 0%, oklch(0.70 0.07 240 / 0.30), transparent 60%),
+    radial-gradient(ellipse 100% 80% at 0% 100%, oklch(0.78 0.05 235 / 0.18), transparent 60%),
+    linear-gradient(140deg, oklch(0.955 0.008 82), oklch(0.935 0.012 82));
+}
+.tint-cream {
+  background:
+    radial-gradient(ellipse 100% 80% at 100% 0%, oklch(0.88 0.05 80 / 0.35), transparent 60%),
+    linear-gradient(140deg, oklch(0.955 0.008 82), oklch(0.93 0.018 80));
+}
+.tint-ink {
+  background:
+    radial-gradient(ellipse 120% 80% at 0% 100%, oklch(0.58 0.06 240 / 0.18), transparent 60%),
+    linear-gradient(140deg, oklch(0.88 0.012 82), oklch(0.86 0.012 80));
+}
+
+/* Status dot gentle blink */
+@keyframes status-blink {
+  0%, 70%, 100% { opacity: 1; }
+  85% { opacity: 0.25; }
+}
+.status-blink { animation: status-blink 2.6s ease-in-out infinite; }
+
+/* Tool-reply overlay entry (Panel 2) — fades up on each active-server change */
+@keyframes tool-reply-in {
+  0%   { opacity: 0; transform: rotate(1.2deg) translateY(6px); }
+  100% { opacity: 1; transform: rotate(1.2deg) translateY(0); }
+}
+@keyframes file-drop-in {
+  0%   { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes fade-up-in {
+  0%   { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes progress-fill {
+  0%   { width: 0%; }
+  100% { width: 100%; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="tool-reply-in"] { animation: none !important; opacity: 1 !important; }
+}
+
+/* Publish collage loop — staggered fade/float for the three output cards */
+@keyframes publish-float-l {
+  0%, 100% { opacity: 1; transform: rotate(-2.2deg) translateY(0); }
+  3%       { opacity: 0; transform: rotate(-2.2deg) translateY(10px); }
+  15%, 92% { opacity: 1; transform: rotate(-2.2deg) translateY(-2px); }
+}
+@keyframes publish-float-m {
+  0%, 100% { opacity: 1; transform: rotate(-0.5deg) translateY(0); }
+  16%      { opacity: 0; transform: rotate(-0.5deg) translateY(10px); }
+  30%, 94% { opacity: 1; transform: rotate(-0.5deg) translateY(-3px); }
+}
+@keyframes publish-float-r {
+  0%, 100% { opacity: 1; transform: rotate(1.8deg) translateY(0); }
+  32%      { opacity: 0; transform: rotate(1.8deg) translateY(10px); }
+  48%, 96% { opacity: 1; transform: rotate(1.8deg) translateY(-3px); }
+}
+.publish-l { animation: publish-float-l 10s ease-in-out infinite; }
+.publish-m { animation: publish-float-m 10s ease-in-out infinite; }
+.publish-r { animation: publish-float-r 10s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .publish-l { transform: rotate(-2.2deg); animation: none; }
+  .publish-m { transform: rotate(-0.5deg); animation: none; }
+  .publish-r { transform: rotate(1.8deg);  animation: none; }
+}
+
+/* Publish ribbon click — pulses at the moment the cards cascade in */
+@keyframes publish-click {
+  0%, 92%, 100% { transform: scale(1); box-shadow: 0 0 0 0 oklch(0.805 0.028 18 / 0); }
+  1%            { transform: scale(0.94); box-shadow: 0 0 0 0 oklch(0.805 0.028 18 / 0.5); }
+  5%            { transform: scale(1.06); box-shadow: 0 0 0 10px oklch(0.805 0.028 18 / 0); }
+}
+.publish-ribbon { animation: publish-click 10s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .publish-ribbon { animation: none; }
+}

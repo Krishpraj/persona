@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { AsciiField } from "@/components/landing/AsciiField";
 import { cn } from "@/lib/utils";
 
 /* ——————————————————————————————————————————————————————————————
@@ -24,8 +25,9 @@ function SignInInner() {
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/home";
   const initialError = searchParams.get("error") || "";
+  const initialMode = searchParams.get("mode") === "signup" ? "signup" : "signin";
 
-  const [mode, setMode] = useState("signin"); // "signin" | "signup"
+  const [mode, setMode] = useState(initialMode); // "signin" | "signup"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -105,20 +107,25 @@ function SignInInner() {
   const isSignin = mode === "signin";
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60 bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-6xl items-center px-6 sm:px-8">
-          <Link href="/" className="flex items-baseline tracking-tight">
-            <span className="text-[16px] font-medium">persona</span>
-            <span className="cursor-blink ml-0.5 font-mono text-[18px] leading-none text-primary">
-              _
-            </span>
-          </Link>
-        </div>
-      </header>
+    <div className="flex min-h-screen bg-background text-foreground">
+      {/* LEFT — form pane */}
+      <main className="relative flex w-full flex-col lg:w-[520px] lg:border-r lg:border-foreground/20">
+        <header className="border-b border-border/60 bg-background/80 backdrop-blur-xl">
+          <div className="flex h-16 items-center px-6 sm:px-8">
+            <Link
+              href="/"
+              className="flex items-baseline tracking-tight transition-opacity hover:opacity-80"
+            >
+              <span className="text-[22px] font-medium leading-none">persona</span>
+              <span className="cursor-blink ml-0.5 font-mono text-[26px] leading-none text-primary">
+                _
+              </span>
+            </Link>
+          </div>
+        </header>
 
-      <main className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4 py-12">
-        <div className="w-full max-w-[420px]">
+        <div className="flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
+          <div className="w-full max-w-[420px]">
           {/* mode toggle */}
           <div className="mb-6 inline-flex w-full items-stretch border border-border/70 bg-card/30">
             <button
@@ -283,8 +290,60 @@ function SignInInner() {
               {isSignin ? "Create an account" : "Sign in"}
             </button>
           </p>
+          </div>
         </div>
       </main>
+
+      {/* RIGHT — atmospheric art pane (desktop only) */}
+      <aside className="relative hidden flex-1 overflow-hidden lg:flex lg:items-center lg:justify-center">
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <AsciiField className="opacity-95" palette="spectrum" />
+        </div>
+        {/* blue ambient glow — top-left */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-[10%] -top-[10%] h-[70%] w-[70%] bg-[radial-gradient(ellipse_60%_50%_at_30%_30%,oklch(0.56_0.17_252/0.28),transparent_70%)]"
+        />
+        {/* rose ambient glow — bottom-right */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-[10%] -bottom-[10%] h-[70%] w-[70%] bg-[radial-gradient(ellipse_60%_50%_at_70%_70%,oklch(0.6_0.22_28/0.25),transparent_70%)]"
+        />
+        {/* cream legibility vignette */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_62%_58%_at_50%_45%,oklch(0.925_0.010_82/0.95),oklch(0.925_0.010_82/0.72)_45%,oklch(0.925_0.010_82/0.22)_70%,transparent_90%)]"
+        />
+
+        <div className="relative mx-10 max-w-[520px] xl:mx-16">
+          <h2 className="font-display text-[2.4rem] font-normal leading-[1.02] tracking-[-0.02em] xl:text-[3rem]">
+            Every answer,
+            <br />
+            <em className="relative whitespace-nowrap font-display italic">
+              traceable
+              <svg
+                aria-hidden
+                viewBox="0 0 200 10"
+                preserveAspectRatio="none"
+                className="absolute -bottom-1 left-0 h-[0.35em] w-full text-primary/70"
+              >
+                <path
+                  d="M2 6 Q 50 1 100 5 T 198 4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </em>
+            .
+          </h2>
+          <p className="mt-5 text-[14.5px] font-medium leading-[1.65] text-foreground/90">
+            Your projects, tools, and skills are one login away. Pick up a
+            draft or ship a new agent — the workspace remembers.
+          </p>
+        </div>
+      </aside>
     </div>
   );
 }
