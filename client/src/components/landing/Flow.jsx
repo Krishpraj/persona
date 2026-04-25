@@ -843,14 +843,15 @@ function Chapter({ index, no, kicker, title, body, Visual }) {
       />
 
       {/* numbered marker — starts centered against the visual; sticks
-          to top-48 once scroll pushes it above that threshold */}
-      <div className="relative order-1 md:order-none md:flex md:items-center">
+          to top-48 once scroll pushes it above that threshold.
+          Hidden on mobile to keep the chapter compact. */}
+      <div className="relative order-1 hidden md:order-none md:flex md:items-center">
         <div className="md:sticky md:top-48">
           <div
             className="flow-marker relative z-[2] inline-flex items-center gap-3 md:block"
             data-active={active ? "true" : "false"}
           >
-            <span className="flow-marker-circle relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-foreground/25 bg-background font-mono text-[11.5px] tabular-nums tracking-[0.04em] text-foreground transition-[border-color,color,transform,box-shadow] duration-[900ms] ease-out">
+            <span className="flow-marker-circle relative inline-flex h-10 w-10 items-center justify-center border border-foreground/25 bg-background font-mono text-[11.5px] tabular-nums tracking-[0.04em] text-foreground transition-[border-color,color] duration-[900ms] ease-out">
               {no}
               <span aria-hidden className="flow-marker-halo" />
             </span>
@@ -1003,15 +1004,15 @@ export function Flow() {
 
       {/* rail container — holds chapters and the progress rail */}
       <div ref={railRef} className="relative pt-4 sm:pt-8">
-        {/* faint ink track */}
+        {/* faint ink track — hidden on mobile (no chapter marker to anchor to) */}
         <span
           aria-hidden
-          className="flow-rail-track pointer-events-none absolute top-0 bottom-0 w-px left-[calc(1.5rem+22px)] md:left-[calc(2.5rem+22px)]"
+          className="flow-rail-track pointer-events-none absolute top-0 bottom-0 hidden w-px md:block md:left-[calc(2.5rem+22px)]"
         />
         {/* rose progress fill */}
         <span
           aria-hidden
-          className="flow-rail-fill pointer-events-none absolute top-0 bottom-0 w-px left-[calc(1.5rem+22px)] md:left-[calc(2.5rem+22px)]"
+          className="flow-rail-fill pointer-events-none absolute top-0 bottom-0 hidden w-px md:block md:left-[calc(2.5rem+22px)]"
         />
 
         <div>

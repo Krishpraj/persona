@@ -315,38 +315,41 @@
   .flow-rail-fill { transform: scaleY(1); }
 }
 
-/* Rail marker halo — pulses when its chapter is "active" (head of scroll) */
+/* Rail marker halo — marching-dash selection frame around the active chapter.
+   Four hairline dashed edges that flow clockwise around the marker,
+   like a terminal selection. Boxy, monospace-feeling, no blink. */
 .flow-marker-halo {
   position: absolute;
-  inset: -6px;
-  border-radius: 9999px;
-  border: 1px solid oklch(0.805 0.028 18 / 0.5);
+  inset: -5px;
+  pointer-events: none;
   opacity: 0;
-  transform: scale(0.8);
-  transition: opacity 400ms ease-out, transform 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  background-image:
+    linear-gradient(90deg, oklch(0.805 0.028 18 / 0.85) 0 4px, transparent 4px 8px),
+    linear-gradient(90deg, oklch(0.805 0.028 18 / 0.85) 0 4px, transparent 4px 8px),
+    linear-gradient(0deg,  oklch(0.805 0.028 18 / 0.85) 0 4px, transparent 4px 8px),
+    linear-gradient(0deg,  oklch(0.805 0.028 18 / 0.85) 0 4px, transparent 4px 8px);
+  background-size: 8px 1px, 8px 1px, 1px 8px, 1px 8px;
+  background-position: 0 0, 0 100%, 0 0, 100% 0;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  transition: opacity 500ms ease-out;
 }
 .flow-marker[data-active="true"] .flow-marker-halo {
   opacity: 1;
-  transform: scale(1);
-  animation: flow-marker-pulse 2.4s ease-out infinite;
+  animation: flow-marker-march 1.8s linear infinite;
 }
-@keyframes flow-marker-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.805 0.028 18 / 0.35); }
-  50%      { box-shadow: 0 0 0 10px oklch(0.805 0.028 18 / 0); }
-}
-/* Active circle — rose border + text, gentle lift */
-.flow-marker[data-active="true"] .flow-marker-circle {
-  border-color: oklch(0.805 0.028 18 / 0.85);
-  color: oklch(0.55 0.14 22);
-  transform: scale(1.05);
-  box-shadow:
-    0 0 0 4px oklch(0.805 0.028 18 / 0.08),
-    0 8px 22px -14px oklch(0.805 0.028 18 / 0.7);
+@keyframes flow-marker-march {
+  from { background-position: 0 0,    0 100%,  0 0,    100% 0;    }
+  to   { background-position: 8px 0,  -8px 100%, 0 -8px, 100% 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .flow-marker[data-active="true"] .flow-marker-circle {
-    transform: none;
+  .flow-marker[data-active="true"] .flow-marker-halo {
+    animation: none;
   }
+}
+/* Active square — rose hairline + text, no lift, no radiating shadow */
+.flow-marker[data-active="true"] .flow-marker-circle {
+  border-color: oklch(0.805 0.028 18 / 0.7);
+  color: oklch(0.55 0.14 22);
 }
 
 /* Reveal + stagger — fine-grained child reveal for the flow section */

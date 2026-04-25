@@ -192,25 +192,6 @@ function TopBar() {
   );
 }
 
-function Announcement() {
-  return (
-    <Cell className="border-b border-foreground/15 bg-primary/20">
-      <a
-        href="#anatomy"
-        className="group flex items-center justify-center gap-2.5 px-6 py-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-foreground/80 transition-colors hover:text-foreground"
-      >
-        <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-        <span className="font-medium">Launch</span>
-        <span className="h-3 w-px bg-foreground/20" />
-        <span>Project data sources and first-party MCP</span>
-        <span className="text-primary transition-transform group-hover:translate-x-0.5">
-          →
-        </span>
-      </a>
-    </Cell>
-  );
-}
-
 /* ——————————————————————————————————————————————————————————————
  * HERO CELL — interactive ASCII-art backdrop with headline + CTAs
  * (rendered on an HTML canvas; reacts to pointer movement).
@@ -509,7 +490,6 @@ export default function Landing() {
   useSmoothScroll({ navOffset: 76 });
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Announcement />
       <TopBar />
       <HeroCell />
       <Cell id="flow">
