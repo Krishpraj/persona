@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Loading } from "@/components/Loading";
 import McpSection from "./McpSection";
 
-type Provider = "openai" | "anthropic" | "ollama";
+type Provider = "openai" | "anthropic" | "ollama" | "cohere";
 
 type Credential = {
   id: string;
@@ -22,6 +22,7 @@ const PROVIDERS: { value: Provider; label: string; hint: string }[] = [
   { value: "openai", label: "OpenAI", hint: "gpt-4o, gpt-4o-mini" },
   { value: "anthropic", label: "Anthropic", hint: "claude-3-5-sonnet-latest" },
   { value: "ollama", label: "Ollama", hint: "llama3.1, mistral, gemma — self-hosted" },
+  { value: "cohere", label: "Cohere", hint: "command-r-plus, command-r" },
 ];
 
 export default function SettingsPage() {
@@ -215,6 +216,8 @@ export default function SettingsPage() {
                       ? "gpt-4o-mini"
                       : provider === "anthropic"
                       ? "claude-3-5-sonnet-latest"
+                      : provider === "cohere"
+                      ? "command-r-plus"
                       : "llama3.1"
                   }
                   className="w-full rounded-none border border-border/70 bg-background/40 px-3 py-2.5 text-[15px] focus:border-primary/70 focus:outline-none"

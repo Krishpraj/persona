@@ -3,8 +3,8 @@ import { requireUser, isAuthResponse } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase-server";
 import { storeSecret, maskKey } from "@/lib/llm/vault";
 
-type Provider = "openai" | "anthropic" | "ollama";
-const PROVIDERS: Provider[] = ["openai", "anthropic", "ollama"];
+type Provider = "openai" | "anthropic" | "ollama" | "cohere";
+const PROVIDERS: Provider[] = ["openai", "anthropic", "ollama", "cohere"];
 
 export async function GET() {
   const ctx = await requireUser();

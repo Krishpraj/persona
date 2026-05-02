@@ -1,11 +1,12 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createCohere } from "@ai-sdk/cohere";
 import { createOllama } from "ollama-ai-provider";
 import type { LanguageModel } from "ai";
 import { createServiceClient } from "../supabase-server";
 import { readSecret } from "./vault";
 
-export type LlmProvider = "openai" | "anthropic" | "ollama";
+export type LlmProvider = "openai" | "anthropic" | "ollama" | "cohere";
 
 type CredentialRow = {
   id: string;
@@ -19,6 +20,7 @@ const DEFAULT_MODEL: Record<LlmProvider, string> = {
   openai: "gpt-4o-mini",
   anthropic: "claude-3-5-sonnet-latest",
   ollama: "llama3.1",
+  cohere: "command-r-plus",
 };
 
 async function loadActiveCredential(
@@ -53,6 +55,10 @@ function buildModel(cred: CredentialRow, apiKey: string): LanguageModel {
       const client = createOllama({
         baseURL: cred.base_url ?? "http://localhost:11434/api",
       });
+      return client(model);
+    }
+    case "cohere": {
+      const client = createCohere({ apiKey });
       return client(model);
     }
   }
